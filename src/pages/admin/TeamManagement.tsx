@@ -445,15 +445,15 @@ const TeamManagement: React.FC = () => {
 
                 <div className="space-y-4">
                   {/* Photo Upload Section */}
-                  <div className="space-y-3">
+                  <div className="space-y-4 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
                     <label className="block text-sm font-medium text-gray-700">
-                      Profil Fotoğrafı
+                      📸 Profil Fotoğrafı
                     </label>
                     
                     {/* Current Image Preview */}
                     {(formData.image || fileUpload.preview) && (
-                      <div className="flex items-center space-x-4">
-                        <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100">
+                      <div className="flex items-center space-x-4 p-3 bg-white rounded-lg border">
+                        <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
                           <img
                             src={fileUpload.preview || formData.image}
                             alt="Preview"
@@ -461,31 +461,52 @@ const TeamManagement: React.FC = () => {
                           />
                         </div>
                         <div className="text-sm text-gray-600">
-                          {fileUpload.preview ? 'Yeni fotoğraf seçildi' : 'Mevcut fotoğraf'}
+                          <div className="font-medium">
+                            {fileUpload.preview ? '✅ Yeni fotoğraf seçildi' : '📷 Mevcut fotoğraf'}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {fileUpload.preview ? 'Değişiklikler kaydedilecek' : 'Güncellemek için yeni fotoğraf seçin'}
+                          </div>
                         </div>
                       </div>
                     )}
                     
                     {/* File Upload */}
                     <div className="space-y-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileSelect}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      />
-                      <p className="text-xs text-gray-500">
-                        JPG, PNG, GIF formatları desteklenir. Maksimum 5MB.
-                      </p>
+                      <div className="flex items-center justify-center w-full">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-white hover:bg-gray-50">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                            <p className="mb-2 text-sm text-gray-500">
+                              <span className="font-semibold">Fotoğraf seçmek için tıklayın</span>
+                            </p>
+                            <p className="text-xs text-gray-500">JPG, PNG, GIF (MAX. 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
                     </div>
                     
                     {/* URL Input (Alternative) */}
-                    <div className="text-sm text-gray-600 text-center">veya</div>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300" />
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-gray-50 text-gray-500">veya</span>
+                      </div>
+                    </div>
+                    
                     <Input
-                      label="Fotoğraf URL'si"
+                      label="🌐 Fotoğraf URL'si"
                       value={formData.image}
                       onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                      placeholder="https://..."
+                      placeholder="https://example.com/photo.jpg"
                     />
                   </div>
 
