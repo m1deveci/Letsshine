@@ -92,7 +92,7 @@ const ServicesManagement: React.FC = () => {
         className="mb-6"
       >
         <Card>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex-1">
               <Input
                 placeholder="Hizmet ara..."
@@ -101,7 +101,7 @@ const ServicesManagement: React.FC = () => {
                 leftIcon={<Search className="w-4 h-4" />}
               />
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-center sm:justify-start">
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -123,7 +123,7 @@ const ServicesManagement: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
       >
         {filteredServices.map((service) => (
           <Card key={service.id} className={`${!service.isActive ? 'opacity-60' : ''}`}>

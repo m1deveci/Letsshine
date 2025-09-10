@@ -16,10 +16,30 @@ const pool = new pg.Pool({
   // password olmadan peer authentication kullanılır
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Security middleware
+app.use((req, res, next) => {
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  next();
+});
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://letsshine.com.tr', 'https://www.letsshine.com.tr']
+    : ['http://localhost:3000', 'http://localhost:5173'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Body parsing middleware with limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -80,9 +100,32 @@ app.post('/api/applications', async (req, res) => {
   try {
     const { name, email, phone, serviceId, serviceName, category, message } = req.body;
     
+    // Input validation
+    if (!name || !email || !phone || !serviceId || !message) {
+      return res.status(400).json({ error: 'Required fields are missing' });
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Phone validation (basic)
+    const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ error: 'Invalid phone format' });
+    }
+    
+    // Sanitize inputs
+    const sanitizedName = name.trim().substring(0, 100);
+    const sanitizedEmail = email.trim().toLowerCase().substring(0, 100);
+    const sanitizedPhone = phone.trim().substring(0, 20);
+    const sanitizedMessage = message.trim().substring(0, 1000);
+    
     const result = await pool.query(
       'INSERT INTO applications (name, email, phone, service_id, service_name, category, message) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [name, email, phone, serviceId, serviceName, category, message]
+      [sanitizedName, sanitizedEmail, sanitizedPhone, serviceId, serviceName, category, sanitizedMessage]
     );
     
     res.status(201).json(result.rows[0]);
@@ -106,6 +149,19 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
+// Admin authentication middleware
+const authenticateAdmin = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  
+  // Simple token validation - in production use JWT
+  if (token === 'demo-token') {
+    req.user = { id: '1', email: 'admin@letsshine.com', role: 'admin' };
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+
 // Admin API Routes (basic auth needed)
 app.post('/api/admin/login', async (req, res) => {
   try {
@@ -126,7 +182,7 @@ app.post('/api/admin/login', async (req, res) => {
   }
 });
 
-app.get('/api/admin/applications', async (req, res) => {
+app.get('/api/admin/applications', authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM applications ORDER BY created_at DESC');
     res.json(result.rows);
@@ -136,7 +192,7 @@ app.get('/api/admin/applications', async (req, res) => {
   }
 });
 
-app.put('/api/admin/applications/:id/status', async (req, res) => {
+app.put('/api/admin/applications/:id/status', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -181,7 +237,7 @@ app.get('/api/team', async (req, res) => {
   }
 });
 
-app.get('/api/admin/team', async (req, res) => {
+app.get('/api/admin/team', authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM team_members ORDER BY order_position');
     res.json(result.rows.map(row => ({
@@ -204,7 +260,7 @@ app.get('/api/admin/team', async (req, res) => {
   }
 });
 
-app.post('/api/admin/team', async (req, res) => {
+app.post('/api/admin/team', authenticateAdmin, async (req, res) => {
   try {
     const { name, title, bio, email, linkedin, image, order, isActive, expertise } = req.body;
     
@@ -234,7 +290,7 @@ app.post('/api/admin/team', async (req, res) => {
   }
 });
 
-app.put('/api/admin/team/:id', async (req, res) => {
+app.put('/api/admin/team/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, title, bio, email, linkedin, image, order, isActive, expertise } = req.body;
@@ -269,7 +325,7 @@ app.put('/api/admin/team/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/admin/team/:id', async (req, res) => {
+app.delete('/api/admin/team/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -287,7 +343,7 @@ app.delete('/api/admin/team/:id', async (req, res) => {
 });
 
 // File upload endpoint for team photos
-app.post('/api/admin/upload', upload.single('image'), (req, res) => {
+app.post('/api/admin/upload', authenticateAdmin, upload.single('image'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
