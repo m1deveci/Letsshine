@@ -213,6 +213,53 @@ app.put('/api/admin/applications/:id/status', authenticateAdmin, async (req, res
   }
 });
 
+// About Content API Route
+app.get('/api/about', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM about_content ORDER BY order_position');
+    const sections = result.rows.map(row => ({
+      id: row.id.toString(),
+      title: row.title,
+      content: row.content,
+      image: row.image,
+      order: row.order_position
+    }));
+    
+    res.json({
+      title: 'Hakkımızda',
+      subtitle: 'İnsan Odaklı Çözümler',
+      description: 'Let\'s Shine olarak, insan kaynakları alanında uzman ekibimizle şirketlerinizin en değerli varlığı olan insan kaynağını en verimli şekilde yönetmenize yardımcı oluyoruz.',
+      sections: sections
+    });
+  } catch (error) {
+    console.error('Error fetching about content:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Public Applications API Route (for form submissions)
+app.get('/api/applications', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM applications ORDER BY created_at DESC');
+    res.json(result.rows.map(row => ({
+      id: row.id.toString(),
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      serviceId: row.service_id,
+      serviceName: row.service_name,
+      category: row.category,
+      message: row.message,
+      status: row.status,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    })));
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Team Members API Routes
 app.get('/api/team', async (req, res) => {
   try {
