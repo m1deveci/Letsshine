@@ -44,6 +44,7 @@ const SettingsPage: React.FC = () => {
     register,
     handleSubmit,
     setValue,
+    trigger,
     formState: { errors, isDirty }
   } = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
@@ -108,8 +109,12 @@ const SettingsPage: React.FC = () => {
       // Update settings immediately with the preview URL
       updateSettings({ logo: result });
       
-      // Update form state to trigger isDirty
-      setValue('title', settings.title || '', { shouldDirty: true });
+      // Force form to be dirty by updating a field
+      setValue('title', settings.title || 'Let\'s Shine', { shouldDirty: true, shouldTouch: true });
+      setValue('description', settings.description || 'İnsan Odaklı Çözümler', { shouldDirty: true, shouldTouch: true });
+      
+      // Trigger validation to ensure form state is updated
+      await trigger();
     };
     reader.readAsDataURL(file);
 
@@ -142,8 +147,12 @@ const SettingsPage: React.FC = () => {
       // Update favicon in DOM immediately
       updateFaviconInDOM(result);
       
-      // Update form state to trigger isDirty
-      setValue('title', settings.title || '', { shouldDirty: true });
+      // Force form to be dirty by updating a field
+      setValue('title', settings.title || 'Let\'s Shine', { shouldDirty: true, shouldTouch: true });
+      setValue('description', settings.description || 'İnsan Odaklı Çözümler', { shouldDirty: true, shouldTouch: true });
+      
+      // Trigger validation to ensure form state is updated
+      await trigger();
     };
     reader.readAsDataURL(file);
 
