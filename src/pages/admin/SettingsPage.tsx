@@ -43,6 +43,7 @@ const SettingsPage: React.FC = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isDirty }
   } = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
@@ -106,6 +107,9 @@ const SettingsPage: React.FC = () => {
       
       // Update settings immediately with the preview URL
       updateSettings({ logo: result });
+      
+      // Update form state to trigger isDirty
+      setValue('title', settings.title || '', { shouldDirty: true });
     };
     reader.readAsDataURL(file);
 
@@ -137,6 +141,9 @@ const SettingsPage: React.FC = () => {
       
       // Update favicon in DOM immediately
       updateFaviconInDOM(result);
+      
+      // Update form state to trigger isDirty
+      setValue('title', settings.title || '', { shouldDirty: true });
     };
     reader.readAsDataURL(file);
 
