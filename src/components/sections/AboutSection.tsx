@@ -1,5 +1,5 @@
 import React from 'react'
-import { Users, Lightbulb, Handshake, Headphones } from 'lucide-react'
+import { Users, Lightbulb, HeartHandshake as Handshake, Headphones } from 'lucide-react'
 import { useContent } from '../../hooks/useContent'
 
 const getIcon = (iconName: string) => {
