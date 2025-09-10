@@ -14,6 +14,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { TeamMember } from '../../types';
+import { useApp } from '../../contexts/AppContext';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
