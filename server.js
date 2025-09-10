@@ -492,6 +492,87 @@ app.get('/api/team', async (req, res) => {
   }
 });
 
+// Public Team CRUD endpoints
+app.post('/api/team', async (req, res) => {
+  try {
+    const { name, title, bio, email, linkedin, image, order, expertise } = req.body;
+    
+    const result = await pool.query(
+      'INSERT INTO team_members (name, title, bio, email, linkedin, image, order_position, expertise) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [name, title, bio, email, linkedin, image, order || 0, expertise || []]
+    );
+    
+    const member = result.rows[0];
+    res.status(201).json({
+      id: member.id.toString(),
+      name: member.name,
+      title: member.title,
+      bio: member.bio,
+      email: member.email,
+      linkedin: member.linkedin,
+      image: member.image,
+      order: member.order_position,
+      expertise: member.expertise || [],
+      createdAt: member.created_at,
+      updatedAt: member.updated_at
+    });
+  } catch (error) {
+    console.error('Error creating team member:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/team/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, title, bio, email, linkedin, image, order, expertise } = req.body;
+    
+    const result = await pool.query(
+      'UPDATE team_members SET name = $1, title = $2, bio = $3, email = $4, linkedin = $5, image = $6, order_position = $7, expertise = $8, updated_at = NOW() WHERE id = $9 RETURNING *',
+      [name, title, bio, email, linkedin, image, order || 0, expertise || [], id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Team member not found' });
+    }
+    
+    const member = result.rows[0];
+    res.json({
+      id: member.id.toString(),
+      name: member.name,
+      title: member.title,
+      bio: member.bio,
+      email: member.email,
+      linkedin: member.linkedin,
+      image: member.image,
+      order: member.order_position,
+      expertise: member.expertise || [],
+      createdAt: member.created_at,
+      updatedAt: member.updated_at
+    });
+  } catch (error) {
+    console.error('Error updating team member:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/team/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query('DELETE FROM team_members WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Team member not found' });
+    }
+    
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting team member:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/api/admin/team', authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM team_members ORDER BY order_position');
