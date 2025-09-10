@@ -137,12 +137,16 @@ app.post('/api/applications', async (req, res) => {
 
 app.get('/api/settings', async (req, res) => {
   try {
-    const result = await pool.query('SELECT setting_key, setting_value FROM site_settings');
-    const settings = {};
-    result.rows.forEach(row => {
-      settings[row.setting_key] = row.setting_value;
-    });
-    res.json(settings);
+    const result = await pool.query('SELECT * FROM site_settings ORDER BY id LIMIT 1');
+    if (result.rows.length === 0) {
+      return res.json({
+        title: 'Let\'s Shine',
+        description: 'İnsan Odaklı Çözümler',
+        logo: null,
+        favicon: null
+      });
+    }
+    res.json(result.rows[0]);
   } catch (error) {
     console.error('Error fetching settings:', error);
     res.status(500).json({ error: 'Internal server error' });
