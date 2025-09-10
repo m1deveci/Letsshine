@@ -237,6 +237,100 @@ app.get('/api/about', async (req, res) => {
   }
 });
 
+// Admin About Content API Routes
+app.get('/api/admin/about', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM about_content ORDER BY order_position');
+    const sections = result.rows.map(row => ({
+      id: row.id.toString(),
+      title: row.title,
+      content: row.content,
+      image: row.image,
+      order: row.order_position
+    }));
+    
+    res.json({
+      title: 'Hakkımızda',
+      subtitle: 'İnsan Odaklı Çözümler',
+      description: 'Let\'s Shine olarak, insan kaynakları alanında uzman ekibimizle şirketlerinizin en değerli varlığı olan insan kaynağını en verimli şekilde yönetmenize yardımcı oluyoruz.',
+      sections: sections
+    });
+  } catch (error) {
+    console.error('Error fetching about content:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/admin/about/sections', authenticateAdmin, async (req, res) => {
+  try {
+    const { title, content, image, order } = req.body;
+    
+    const result = await pool.query(
+      'INSERT INTO about_content (title, content, image, order_position) VALUES ($1, $2, $3, $4) RETURNING *',
+      [title, content, image, order]
+    );
+    
+    const newSection = {
+      id: result.rows[0].id.toString(),
+      title: result.rows[0].title,
+      content: result.rows[0].content,
+      image: result.rows[0].image,
+      order: result.rows[0].order_position
+    };
+    
+    res.status(201).json(newSection);
+  } catch (error) {
+    console.error('Error adding about section:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/admin/about/sections/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, content, image, order } = req.body;
+    
+    const result = await pool.query(
+      'UPDATE about_content SET title = $1, content = $2, image = $3, order_position = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
+      [title, content, image, order, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Section not found' });
+    }
+    
+    const updatedSection = {
+      id: result.rows[0].id.toString(),
+      title: result.rows[0].title,
+      content: result.rows[0].content,
+      image: result.rows[0].image,
+      order: result.rows[0].order_position
+    };
+    
+    res.json(updatedSection);
+  } catch (error) {
+    console.error('Error updating about section:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/admin/about/sections/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query('DELETE FROM about_content WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Section not found' });
+    }
+    
+    res.json({ message: 'Section deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting about section:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Public Applications API Route (for form submissions)
 app.get('/api/applications', async (req, res) => {
   try {

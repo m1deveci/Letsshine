@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Plus, Edit, Trash2, Image, Type, Layout, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import Swal from 'sweetalert2';
 
 const AboutManagement: React.FC = () => {
   const { aboutContent, updateAboutContent, addAboutSection, updateAboutSection, deleteAboutSection } = useApp();
+  const { token } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [newSection, setNewSection] = useState({
@@ -26,37 +29,124 @@ const AboutManagement: React.FC = () => {
     isActive: aboutContent?.isActive || true
   });
 
-  const handleSaveAbout = () => {
+  const handleSaveAbout = async () => {
     if (!aboutContent) return;
 
-    updateAboutContent({
-      ...aboutContent,
-      ...aboutForm
+    try {
+      updateAboutContent({
+        ...aboutContent,
+        ...aboutForm
+      });
+      setIsEditing(false);
+      
+      await Swal.fire({
+        title: 'Başarılı!',
+        text: 'Hakkımızda içeriği başarıyla güncellendi.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      await Swal.fire({
+        title: 'Hata!',
+        text: 'İçerik güncellenirken hata oluştu.',
+        icon: 'error',
+        confirmButtonText: 'Tamam'
+      });
+    }
+  };
+
+  const handleAddSection = async () => {
+    if (!newSection.title || !newSection.content) {
+      await Swal.fire({
+        title: 'Uyarı!',
+        text: 'Başlık ve içerik alanları zorunludur.',
+        icon: 'warning',
+        confirmButtonText: 'Tamam'
+      });
+      return;
+    }
+
+    try {
+      addAboutSection(newSection);
+      setNewSection({
+        title: '',
+        content: '',
+        type: 'text',
+        order: (aboutContent?.sections.length || 0) + 1,
+        image: ''
+      });
+      
+      await Swal.fire({
+        title: 'Başarılı!',
+        text: 'Yeni bölüm başarıyla eklendi.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      await Swal.fire({
+        title: 'Hata!',
+        text: 'Bölüm eklenirken hata oluştu.',
+        icon: 'error',
+        confirmButtonText: 'Tamam'
+      });
+    }
+  };
+
+  const handleUpdateSection = async (id: string, data: Partial<typeof newSection>) => {
+    try {
+      updateAboutSection(id, data);
+      setEditingSection(null);
+      
+      await Swal.fire({
+        title: 'Başarılı!',
+        text: 'Bölüm başarıyla güncellendi.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      await Swal.fire({
+        title: 'Hata!',
+        text: 'Bölüm güncellenirken hata oluştu.',
+        icon: 'error',
+        confirmButtonText: 'Tamam'
+      });
+    }
+  };
+
+  const handleDeleteSection = async (id: string) => {
+    const result = await Swal.fire({
+      title: 'Bölümü Sil',
+      text: 'Bu bölümü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Evet, Sil',
+      cancelButtonText: 'İptal',
+      reverseButtons: true
     });
-    setIsEditing(false);
-  };
 
-  const handleAddSection = () => {
-    if (!newSection.title || !newSection.content) return;
-
-    addAboutSection(newSection);
-    setNewSection({
-      title: '',
-      content: '',
-      type: 'text',
-      order: (aboutContent?.sections.length || 0) + 1,
-      image: ''
-    });
-  };
-
-  const handleUpdateSection = (id: string, data: Partial<typeof newSection>) => {
-    updateAboutSection(id, data);
-    setEditingSection(null);
-  };
-
-  const handleDeleteSection = (id: string) => {
-    if (confirm('Bu bölümü silmek istediğinizden emin misiniz?')) {
-      deleteAboutSection(id);
+    if (result.isConfirmed) {
+      try {
+        deleteAboutSection(id);
+        await Swal.fire({
+          title: 'Silindi!',
+          text: 'Bölüm başarıyla silindi.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } catch (error) {
+        await Swal.fire({
+          title: 'Hata!',
+          text: 'Bölüm silinirken hata oluştu.',
+          icon: 'error',
+          confirmButtonText: 'Tamam'
+        });
+      }
     }
   };
 

@@ -404,6 +404,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   });
   const [aboutContent, setAboutContent] = useState<AboutContent | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  
+  // Get token from sessionStorage for API calls
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
 
   // Database'den veri çekme fonksiyonları
   const fetchServices = async () => {
@@ -574,41 +577,75 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setAboutContent({ ...newAboutContent, updatedAt: new Date() });
   };
 
-  const addAboutSection = (sectionData: Omit<AboutSection, 'id'>) => {
-    if (!aboutContent) return;
-    
-    const newSection: AboutSection = {
-      ...sectionData,
-      id: Date.now().toString()
-    };
-    
-    setAboutContent(prev => prev ? {
-      ...prev,
-      sections: [...prev.sections, newSection].sort((a, b) => a.order - b.order),
-      updatedAt: new Date()
-    } : null);
+  const addAboutSection = async (sectionData: Omit<AboutSection, 'id'>) => {
+    try {
+      const response = await fetch('/api/admin/about/sections', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sectionData)
+      });
+      
+      if (response.ok) {
+        const newSection = await response.json();
+        setAboutContent(prev => prev ? {
+          ...prev,
+          sections: [...prev.sections, newSection].sort((a, b) => a.order - b.order),
+          updatedAt: new Date()
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error adding about section:', error);
+    }
   };
 
-  const updateAboutSection = (id: string, sectionData: Partial<AboutSection>) => {
-    if (!aboutContent) return;
-    
-    setAboutContent(prev => prev ? {
-      ...prev,
-      sections: prev.sections.map(section =>
-        section.id === id ? { ...section, ...sectionData } : section
-      ).sort((a, b) => a.order - b.order),
-      updatedAt: new Date()
-    } : null);
+  const updateAboutSection = async (id: string, sectionData: Partial<AboutSection>) => {
+    try {
+      const response = await fetch(`/api/admin/about/sections/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sectionData)
+      });
+      
+      if (response.ok) {
+        const updatedSection = await response.json();
+        setAboutContent(prev => prev ? {
+          ...prev,
+          sections: prev.sections.map(section => 
+            section.id === id ? updatedSection : section
+          ).sort((a, b) => a.order - b.order),
+          updatedAt: new Date()
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error updating about section:', error);
+    }
   };
 
-  const deleteAboutSection = (id: string) => {
-    if (!aboutContent) return;
-    
-    setAboutContent(prev => prev ? {
-      ...prev,
-      sections: prev.sections.filter(section => section.id !== id),
-      updatedAt: new Date()
-    } : null);
+  const deleteAboutSection = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/about/sections/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        setAboutContent(prev => prev ? {
+          ...prev,
+          sections: prev.sections.filter(section => section.id !== id),
+          updatedAt: new Date()
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error deleting about section:', error);
+    }
   };
 
   const addTeamMember = async (memberData: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>) => {
