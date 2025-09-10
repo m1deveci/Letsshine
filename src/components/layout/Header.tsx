@@ -33,28 +33,28 @@ export const Header: React.FC = () => {
   }
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled ? 'bg-white shadow-lg' : 'bg-white/95 backdrop-blur-sm'
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      isScrolled ? 'bg-white/95 backdrop-blur-md shadow-large border-b border-gray-100/50' : 'bg-white/80 backdrop-blur-sm'
     }`}>
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="flex items-center justify-between h-18 lg:h-24">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-4 group">
             <img 
               src="/images/logo_68763840566a21.02519408.png" 
               alt="Let's Shine Logo" 
-              className="h-8 w-auto lg:h-10"
+              className="h-10 w-auto lg:h-12 group-hover:scale-110 transition-transform duration-300"
             />
-            <span className="text-xl lg:text-2xl font-bold text-primary-600">
+            <span className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
               {content.site.name}
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-8">
+          <div className="hidden lg:flex items-center space-x-10">
             <Link 
               to="/" 
-              className={`font-medium transition-colors hover:text-primary-600 ${
+              className={`font-semibold text-lg transition-all duration-300 hover:text-primary-600 hover:scale-105 ${
                 location.pathname === '/' ? 'text-primary-600' : 'text-gray-700'
               }`}
             >
@@ -65,14 +65,14 @@ export const Header: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setIsServicesOpen(!isServicesOpen)}
-                className="flex items-center space-x-1 font-medium text-gray-700 hover:text-primary-600 transition-colors"
+                className="flex items-center space-x-2 font-semibold text-lg text-gray-700 hover:text-primary-600 transition-all duration-300 hover:scale-105"
               >
                 <span>Hizmetlerimiz</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${isServicesOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isServicesOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isServicesOpen && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 animate-scale-in">
+                <div className="absolute top-full left-0 mt-3 w-72 bg-white/95 backdrop-blur-md rounded-2xl shadow-large border border-gray-100/50 py-3 animate-scale-in">
                   {content.navigation.services.map((service) => (
                     service.external ? (
                       <a
@@ -80,7 +80,7 @@ export const Header: React.FC = () => {
                         href={service.path}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                        className="block px-6 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-300 font-medium hover:translate-x-1"
                       >
                         {service.name}
                       </a>
@@ -88,7 +88,7 @@ export const Header: React.FC = () => {
                       <Link
                         key={service.name}
                         to={service.path}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                        className="block px-6 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-300 font-medium hover:translate-x-1"
                       >
                         {service.name}
                       </Link>
@@ -100,14 +100,14 @@ export const Header: React.FC = () => {
 
             <button
               onClick={handleContactClick}
-              className="font-medium text-gray-700 hover:text-primary-600 transition-colors"
+              className="font-semibold text-lg text-gray-700 hover:text-primary-600 transition-all duration-300 hover:scale-105"
             >
               İletişim
             </button>
 
             <Link
               to="/contact"
-              className="btn-primary"
+              className="bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold py-3 px-8 rounded-2xl transition-all duration-300 hover:shadow-colored hover:-translate-y-1 hover:scale-105"
             >
               Teklif Al
             </Link>
@@ -116,19 +116,19 @@ export const Header: React.FC = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors"
+            className="lg:hidden p-3 rounded-2xl text-gray-700 hover:text-primary-600 hover:bg-primary-50 transition-all duration-300"
           >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
           </button>
         </div>
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-gray-100 animate-slide-up">
-            <div className="flex flex-col space-y-4">
+          <div className="lg:hidden py-6 border-t border-gray-100/50 animate-slide-down bg-white/95 backdrop-blur-md rounded-b-2xl">
+            <div className="flex flex-col space-y-6">
               <Link 
                 to="/" 
-                className={`font-medium transition-colors hover:text-primary-600 ${
+                className={`font-semibold text-lg transition-all duration-300 hover:text-primary-600 hover:translate-x-2 ${
                   location.pathname === '/' ? 'text-primary-600' : 'text-gray-700'
                 }`}
               >
@@ -138,14 +138,14 @@ export const Header: React.FC = () => {
               <div>
                 <button
                   onClick={() => setIsServicesOpen(!isServicesOpen)}
-                  className="flex items-center justify-between w-full font-medium text-gray-700 hover:text-primary-600 transition-colors"
+                  className="flex items-center justify-between w-full font-semibold text-lg text-gray-700 hover:text-primary-600 transition-all duration-300"
                 >
                   <span>Hizmetlerimiz</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isServicesOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isServicesOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isServicesOpen && (
-                  <div className="mt-2 ml-4 space-y-2">
+                  <div className="mt-4 ml-6 space-y-3">
                     {content.navigation.services.map((service) => (
                       service.external ? (
                         <a
@@ -153,7 +153,7 @@ export const Header: React.FC = () => {
                           href={service.path}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block text-sm text-gray-600 hover:text-primary-600 transition-colors"
+                          className="block text-gray-600 hover:text-primary-600 transition-all duration-300 font-medium hover:translate-x-1"
                         >
                           {service.name}
                         </a>
@@ -161,7 +161,7 @@ export const Header: React.FC = () => {
                         <Link
                           key={service.name}
                           to={service.path}
-                          className="block text-sm text-gray-600 hover:text-primary-600 transition-colors"
+                          className="block text-gray-600 hover:text-primary-600 transition-all duration-300 font-medium hover:translate-x-1"
                         >
                           {service.name}
                         </Link>
@@ -173,14 +173,14 @@ export const Header: React.FC = () => {
 
               <button
                 onClick={handleContactClick}
-                className="font-medium text-gray-700 hover:text-primary-600 transition-colors text-left"
+                className="font-semibold text-lg text-gray-700 hover:text-primary-600 transition-all duration-300 text-left hover:translate-x-2"
               >
                 İletişim
               </button>
 
               <Link
                 to="/contact"
-                className="btn-primary inline-block text-center"
+                className="bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 hover:shadow-colored hover:-translate-y-1 inline-block text-center"
               >
                 Teklif Al
               </Link>
