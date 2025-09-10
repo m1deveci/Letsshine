@@ -32,6 +32,12 @@ interface TeamMemberForm {
   expertise: string[];
 }
 
+interface FileUploadState {
+  file: File | null;
+  preview: string | null;
+  uploading: boolean;
+}
+
 const TeamManagement: React.FC = () => {
   const { teamMembers, addTeamMember, updateTeamMember, deleteTeamMember } = useApp();
   const { token } = useAuth();
@@ -49,6 +55,11 @@ const TeamManagement: React.FC = () => {
     expertise: []
   });
   const [newExpertise, setNewExpertise] = useState('');
+  const [fileUpload, setFileUpload] = useState<FileUploadState>({
+    file: null,
+    preview: null,
+    uploading: false
+  });
 
   const handleOpenForm = (member?: TeamMember) => {
     if (member) {
@@ -78,6 +89,12 @@ const TeamManagement: React.FC = () => {
         expertise: []
       });
     }
+    // Reset file upload state
+    setFileUpload({
+      file: null,
+      preview: null,
+      uploading: false
+    });
     setIsFormOpen(true);
   };
 
@@ -85,6 +102,11 @@ const TeamManagement: React.FC = () => {
     setIsFormOpen(false);
     setEditingMember(null);
     setNewExpertise('');
+    setFileUpload({
+      file: null,
+      preview: null,
+      uploading: false
+    });
   };
 
   const handleAddExpertise = () => {
@@ -104,16 +126,93 @@ const TeamManagement: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Lütfen sadece resim dosyası seçin.');
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Dosya boyutu 5MB\'dan küçük olmalıdır.');
+        return;
+      }
+
+      setFileUpload(prev => ({
+        ...prev,
+        file,
+        preview: URL.createObjectURL(file)
+      }));
+    }
+  };
+
+  const handleFileUpload = async (): Promise<string | null> => {
+    if (!fileUpload.file) return null;
+
+    setFileUpload(prev => ({ ...prev, uploading: true }));
+
+    try {
+      const formData = new FormData();
+      formData.append('image', fileUpload.file);
+
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      return result.url;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Dosya yüklenirken hata oluştu.');
+      return null;
+    } finally {
+      setFileUpload(prev => ({ ...prev, uploading: false }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingMember) {
-      updateTeamMember(editingMember.id, formData);
-    } else {
-      addTeamMember(formData);
+    try {
+      let imageUrl = formData.image;
+      
+      // If a new file is selected, upload it first
+      if (fileUpload.file) {
+        const uploadedUrl = await handleFileUpload();
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else {
+          return; // Stop if upload failed
+        }
+      }
+      
+      const memberData = {
+        ...formData,
+        image: imageUrl
+      };
+      
+      if (editingMember) {
+        updateTeamMember(editingMember.id, memberData);
+      } else {
+        addTeamMember(memberData);
+      }
+      
+      handleCloseForm();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Form gönderilirken hata oluştu.');
     }
-    
-    handleCloseForm();
   };
 
   const handleDelete = (id: string) => {
@@ -297,12 +396,50 @@ const TeamManagement: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <Input
-                    label="Profil Fotoğrafı URL"
-                    value={formData.image}
-                    onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                    placeholder="https://..."
-                  />
+                  {/* Photo Upload Section */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Profil Fotoğrafı
+                    </label>
+                    
+                    {/* Current Image Preview */}
+                    {(formData.image || fileUpload.preview) && (
+                      <div className="flex items-center space-x-4">
+                        <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100">
+                          <img
+                            src={fileUpload.preview || formData.image}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {fileUpload.preview ? 'Yeni fotoğraf seçildi' : 'Mevcut fotoğraf'}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* File Upload */}
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      <p className="text-xs text-gray-500">
+                        JPG, PNG, GIF formatları desteklenir. Maksimum 5MB.
+                      </p>
+                    </div>
+                    
+                    {/* URL Input (Alternative) */}
+                    <div className="text-sm text-gray-600 text-center">veya</div>
+                    <Input
+                      label="Fotoğraf URL'si"
+                      value={formData.image}
+                      onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
+                      placeholder="https://..."
+                    />
+                  </div>
 
                   <Input
                     label="Sıra"
@@ -391,8 +528,9 @@ const TeamManagement: React.FC = () => {
                 <Button
                   type="submit"
                   leftIcon={<Save className="w-4 h-4" />}
+                  disabled={fileUpload.uploading}
                 >
-                  {editingMember ? 'Güncelle' : 'Kaydet'}
+                  {fileUpload.uploading ? 'Yükleniyor...' : (editingMember ? 'Güncelle' : 'Kaydet')}
                 </Button>
               </div>
             </form>
