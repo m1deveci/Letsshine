@@ -1,0 +1,262 @@
+/* Custom styles for Let's Shine */
+:root {
+    --primary-color: #4a7c59;
+    --secondary-color: #f8f9fa;
+    --accent-color: #6ba368;
+    --gradient-start: #2d5016;
+    --gradient-end: #a4d65e;
+    --text-dark: #333;
+    --text-light: #666;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--text-dark);
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #1e3d6f;
+    border-color: #1e3d6f;
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.hero-section {
+    background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(74, 124, 89, 0.15) !important;
+}
+
+.navbar-brand img {
+    max-height: 40px;
+    width: auto;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.25);
+}
+
+.social-links a {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.1);
+    transition: background-color 0.3s ease;
+}
+
+.social-links a:hover {
+    background-color: var(--primary-color);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .hero-section {
+        text-align: center;
+        padding: 2rem 0;
+    }
+    
+    .display-4 {
+        font-size: 2.5rem;
+    }
+    
+    .display-5 {
+        font-size: 2rem;
+    }
+    
+    .display-6 {
+        font-size: 1.75rem;
+    }
+}
+
+/* Form styles */
+.form-section {
+    background-color: var(--secondary-color);
+    border-radius: 10px;
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.form-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+}
+
+.alert {
+    border-radius: 10px;
+}
+
+/* Admin panel styles */
+.admin-sidebar {
+    background-color: var(--primary-color);
+    min-height: 100vh;
+}
+
+.admin-sidebar .nav-link {
+    color: rgba(255,255,255,0.8);
+    padding: 0.75rem 1rem;
+    border-radius: 5px;
+    margin-bottom: 0.25rem;
+}
+
+.admin-sidebar .nav-link:hover,
+.admin-sidebar .nav-link.active {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.admin-content {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, var(--primary-color), #1e3d6f);
+    color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.stats-card h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* Updated button styles to match kolayik.com */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    border: none;
+    border-radius: 25px;
+    padding: 12px 30px;
+    font-weight: 600;
+    text-transform: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #3a6249, #5a9357);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(74, 124, 89, 0.3);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    border-radius: 25px;
+    padding: 10px 28px;
+    font-weight: 600;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107, #ffb300);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 30px;
+    font-weight: 600;
+    color: #333;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #ffb300, #ffa000);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
+}
+
+/* Enhanced typography */
+.display-4 {
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.display-5 {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.hero-section h1 {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.hero-section .text-light {
+    color: #ffffff !important;
+}
+
+.hero-section .text-warning {
+    color: #ffc107 !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.lead {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.9);
+}
+
+/* Navigation updates */
+.navbar-light .navbar-nav .nav-link {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+    color: var(--accent-color);
+}
+
+.navbar-brand .text-primary {
+    color: var(--primary-color) !important;
+}
+
+.dropdown-menu {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}

@@ -1,0 +1,166 @@
+{
+  "site": {
+    "name": "Let's Shine",
+    "title": "Let's Shine - İnsan Kaynakları Danışmanlığı",
+    "description": "Stratejik İnsan Kaynakları danışmanlığı, Koçluk & Mentorlük, Psikolojik Danışmanlık alanlarında profesyonel hizmet.",
+    "keywords": "insan kaynakları, danışmanlık, koçluk, mentorluk, psikolojik danışmanlık",
+    "logo": "assets/images/logo_68763840566a21.02519408.png"
+  },
+  "contact": {
+    "email": "info@letsshine.com",
+    "phone": "+90 (XXX) XXX XX XX",
+    "address": "İzmir, Türkiye"
+  },
+  "navigation": {
+    "main": [
+      { "name": "Ana Sayfa", "path": "/" },
+      { "name": "Hizmetlerimiz", "path": "/services", "dropdown": true },
+      { "name": "İletişim", "path": "#contact" }
+    ],
+    "services": [
+      { "name": "İşe Alım", "path": "https://sedaakmandanismanlik.com", "external": true },
+      { "name": "Eğitim", "path": "/egitim" },
+      { "name": "Motivasyonel Faaliyetler", "path": "/motivasyon" },
+      { "name": "Organizasyonel Yapılanma", "path": "/organizasyon" },
+      { "name": "Performans ve Gelişim", "path": "/performans" },
+      { "name": "Koçluk ve Mentörlük", "path": "/kocluk" },
+      { "name": "Psikolojik Danışmanlık", "path": "/psikolojik-danismanlik" },
+      { "name": "Ücret Yönetimi", "path": "/ucretlendirme" }
+    ]
+  },
+  "hero": {
+    "title": "İnsan Kaynakları Danışmanlığında Güvenilir Çözüm Ortağınız",
+    "subtitle": "Stratejik İnsan Kaynakları danışmanlığı, Koçluk & Mentorluk, Psikolojik Danışmanlık alanlarında profesyonel hizmet.",
+    "image": "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    "buttons": [
+      { "text": "Hizmetlerimiz", "link": "#services", "type": "primary" },
+      { "text": "İletişim", "link": "#contact", "type": "outline" }
+    ]
+  },
+  "services": [
+    {
+      "id": "ik-danismanligi",
+      "title": "İK Danışmanlığı",
+      "description": "İş stratejinize uygun insan kaynakları politikaları ve süreç tasarımı",
+      "icon": "fas fa-user-tie",
+      "features": [
+        "İK Strateji Planlaması",
+        "Organizasyonel Yapılanma",
+        "Çalışan El Kitabı",
+        "Ücret Yönetimi"
+      ],
+      "link": "/organizasyon"
+    },
+    {
+      "id": "ise-alim",
+      "title": "Yetkinlik Bazlı İşe Alım",
+      "description": "İş analizlerine dayalı, bilimsel yöntemlerle yetenek avı",
+      "icon": "fas fa-search-dollar",
+      "features": [
+        "Yetkinlik Haritalama",
+        "Assessment Center",
+        "Psikometrik Değerlendirme"
+      ],
+      "link": "https://www.sedaakmandanismanlik.com",
+      "external": true
+    },
+    {
+      "id": "performans",
+      "title": "Performans Yönetimi",
+      "description": "Çalışan performansını artırmaya yönelik bütünsel sistemler",
+      "icon": "fas fa-chart-line",
+      "features": [
+        "KPI Tasarımı",
+        "360° Değerlendirme",
+        "Geri Bildirim Kültürü"
+      ],
+      "link": "/performans"
+    },
+    {
+      "id": "egitim",
+      "title": "Kurumsal Eğitimler",
+      "description": "İş sonuçlarını doğrudan etkileyen ölçülebilir eğitim programları",
+      "icon": "fas fa-graduation-cap",
+      "features": [
+        "Liderlik Eğitimleri",
+        "Satış Eğitimleri",
+        "Kişisel Gelişim"
+      ],
+      "link": "/egitim"
+    },
+    {
+      "id": "calisan-deneyimi",
+      "title": "Çalışan Deneyimi",
+      "description": "Yeteneği elde tutmaya yönelik bütünsel çalışan deneyimi tasarımı",
+      "icon": "fas fa-user-clock",
+      "features": [
+        "Employer Branding",
+        "Çalışan Bağlılığı",
+        "İş-Yaşam Dengesi"
+      ],
+      "link": "/motivasyon"
+    },
+    {
+      "id": "kocluk",
+      "title": "Koçluk",
+      "description": "Bireysel ve profesyonel gelişim için koçluk hizmetleri",
+      "icon": "fas fa-handshake",
+      "features": [
+        "Yeni Mezun",
+        "Uzmanlar",
+        "Emeklilik Sonrası İkinci Çalışma Dönemi"
+      ],
+      "link": "/kocluk"
+    },
+    {
+      "id": "ucretlendirme",
+      "title": "Ücretlendirme",
+      "description": "Şirketlere özel adil ve sürdürülebilir ücret yönetimi",
+      "icon": "fas fa-dollar-sign",
+      "features": [
+        "Ücret Skalası Oluşturma",
+        "Pazar Araştırması",
+        "İş Değerlendirme",
+        "Yan Haklar Sistemi",
+        "Performans Bazlı Ücretlendirme"
+      ],
+      "link": "/ucretlendirme"
+    }
+  ],
+  "about": {
+    "title": "İK Yönetiminde Güvenilir İş Ortağınız",
+    "description": "İşletmenizin insan kaynağını verimli yönetebilmesi için modern çözümler sunuyoruz. Stratejik danışmanlık, koçluk ve sürekli gelişim alanlarında uzmanız.",
+    "features": [
+      {
+        "title": "Uzman Kadro",
+        "description": "Alanında deneyimli ve sertifikalı danışmanlar",
+        "icon": "fas fa-user-tie",
+        "color": "primary"
+      },
+      {
+        "title": "Yenilikçi Stratejiler",
+        "description": "İleriye dönük, esnek insan kaynakları çözümleri",
+        "icon": "fas fa-lightbulb",
+        "color": "success"
+      },
+      {
+        "title": "İşbirliği Odaklı",
+        "description": "Her kurumun ihtiyacına özel destek ve planlama",
+        "icon": "fas fa-handshake",
+        "color": "danger"
+      },
+      {
+        "title": "7/24 Destek",
+        "description": "Danışman ekibimiz her zaman yanınızda",
+        "icon": "fas fa-headset",
+        "color": "info"
+      }
+    ]
+  },
+  "social": {
+    "facebook": "#",
+    "twitter": "#",
+    "linkedin": "#",
+    "instagram": "#"
+  }
+}
