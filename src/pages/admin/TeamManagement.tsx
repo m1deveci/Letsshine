@@ -127,18 +127,28 @@ const TeamManagement: React.FC = () => {
     }));
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        alert('Lütfen sadece resim dosyası seçin.');
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Geçersiz Dosya!',
+          text: 'Lütfen sadece resim dosyası seçin.',
+          confirmButtonText: 'Tamam'
+        });
         return;
       }
       
       // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Dosya boyutu 5MB\'dan küçük olmalıdır.');
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Dosya Çok Büyük!',
+          text: 'Dosya boyutu 5MB\'dan küçük olmalıdır.',
+          confirmButtonText: 'Tamam'
+        });
         return;
       }
 
@@ -175,7 +185,12 @@ const TeamManagement: React.FC = () => {
       return result.url;
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Dosya yüklenirken hata oluştu.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Dosya yüklenirken hata oluştu. Lütfen tekrar deneyin.',
+        confirmButtonText: 'Tamam'
+      });
       return null;
     } finally {
       setFileUpload(prev => ({ ...prev, uploading: false }));
