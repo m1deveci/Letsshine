@@ -353,7 +353,7 @@ const TeamManagement: React.FC = () => {
               </div>
 
               {/* Expertise */}
-              {member.expertise.length > 0 && (
+              {member.expertise && member.expertise.length > 0 && (
                 <div className="mb-4">
                   <div className="flex flex-wrap gap-1 justify-center">
                     {member.expertise.slice(0, 3).map((skill, index) => (

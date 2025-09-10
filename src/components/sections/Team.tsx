@@ -31,8 +31,6 @@ const Team: React.FC = () => {
     fetchTeamMembers();
   }, []);
 
-  const activeMembers = teamMembers.filter(member => member.isActive);
-
   if (isLoading) {
     return (
       <section className="py-20 bg-white">
@@ -46,7 +44,7 @@ const Team: React.FC = () => {
     );
   }
 
-  if (activeMembers.length === 0) {
+  if (teamMembers.length === 0) {
     return null;
   }
 
@@ -77,7 +75,7 @@ const Team: React.FC = () => {
 
         {/* Team Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {activeMembers.map((member, index) => (
+          {teamMembers.map((member, index) => (
             <motion.div
               key={member.id}
               initial={{ opacity: 0, y: 30 }}
