@@ -75,7 +75,18 @@ const upload = multer({
 app.get('/api/services', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM services ORDER BY order_position');
-    res.json(result.rows);
+    res.json(result.rows.map(row => ({
+      id: row.id.toString(),
+      title: row.title,
+      description: row.description,
+      content: row.content,
+      features: row.features || [],
+      icon: row.icon,
+      slug: row.slug,
+      order: row.order_position,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    })));
   } catch (error) {
     console.error('Error fetching services:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -192,6 +203,27 @@ app.get('/api/admin/applications', authenticateAdmin, async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching applications:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/admin/services', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM services ORDER BY order_position');
+    res.json(result.rows.map(row => ({
+      id: row.id.toString(),
+      title: row.title,
+      description: row.description,
+      content: row.content,
+      features: row.features || [],
+      icon: row.icon,
+      slug: row.slug,
+      order: row.order_position,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    })));
+  } catch (error) {
+    console.error('Error fetching services:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
