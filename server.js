@@ -366,10 +366,12 @@ app.get('/api/team', async (req, res) => {
       id: row.id.toString(),
       name: row.name,
       title: row.title,
+      bio: row.bio,
       email: row.email,
       linkedin: row.linkedin,
       image: row.image,
       order: row.order_position,
+      expertise: row.expertise || [],
       createdAt: row.created_at,
       updatedAt: row.updated_at
     })));
@@ -386,10 +388,12 @@ app.get('/api/admin/team', authenticateAdmin, async (req, res) => {
       id: row.id.toString(),
       name: row.name,
       title: row.title,
+      bio: row.bio,
       email: row.email,
       linkedin: row.linkedin,
       image: row.image,
       order: row.order_position,
+      expertise: row.expertise || [],
       createdAt: row.created_at,
       updatedAt: row.updated_at
     })));

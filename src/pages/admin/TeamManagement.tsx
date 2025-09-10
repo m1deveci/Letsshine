@@ -336,11 +336,6 @@ const TeamManagement: React.FC = () => {
                     </div>
                   )}
                 </div>
-                {!member.isActive && (
-                  <div className="absolute top-0 right-0 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs">×</span>
-                  </div>
-                )}
               </div>
 
               {/* Member Info */}
