@@ -11,6 +11,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Application } from '../../types';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
@@ -26,6 +27,7 @@ const ApplicationsManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const { applications, updateApplicationStatus } = useApp();
+  const { token } = useAuth();
 
   // Database'den başvuruları çek
   const fetchApplications = async () => {
@@ -33,7 +35,12 @@ const ApplicationsManagement: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch('/api/admin/applications');
+      const response = await fetch('/api/admin/applications', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch applications');
       }
@@ -104,8 +111,29 @@ const ApplicationsManagement: React.FC = () => {
     }
   };
 
-  const handleStatusChange = (applicationId: string, newStatus: Application['status']) => {
-    updateApplicationStatus(applicationId, newStatus);
+  const handleStatusChange = async (applicationId: string, newStatus: Application['status']) => {
+    try {
+      const response = await fetch(`/api/admin/applications/${applicationId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update application status');
+      }
+      
+      // Update local state
+      updateApplicationStatus(applicationId, newStatus);
+      // Refresh applications from database
+      fetchApplications();
+    } catch (error) {
+      console.error('Error updating application status:', error);
+      setError('Başvuru durumu güncellenirken hata oluştu');
+    }
   };
 
   const handleViewDetails = (application: Application) => {

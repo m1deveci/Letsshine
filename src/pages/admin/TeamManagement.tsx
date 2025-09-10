@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { TeamMember } from '../../types';
 import { useApp } from '../../contexts/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -33,6 +34,7 @@ interface TeamMemberForm {
 
 const TeamManagement: React.FC = () => {
   const { teamMembers, addTeamMember, updateTeamMember, deleteTeamMember } = useApp();
+  const { token } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [formData, setFormData] = useState<TeamMemberForm>({

@@ -4,6 +4,7 @@ import { User } from '../types';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  token: string | null;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
   logout: () => void;
   clearRememberedCredentials: () => void;
@@ -27,6 +28,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Auto-login function to avoid infinite loop
@@ -38,9 +40,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email,
         role: 'admin'
       };
+      const authToken = 'demo-token';
       
       setUser(adminUser);
+      setToken(authToken);
       sessionStorage.setItem('user', JSON.stringify(adminUser));
+      sessionStorage.setItem('token', authToken);
       return true;
     }
     return false;
@@ -49,11 +54,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Check for existing session in both sessionStorage and localStorage
     const sessionUser = sessionStorage.getItem('user');
+    const sessionToken = sessionStorage.getItem('token');
     const rememberedUser = localStorage.getItem('rememberedUser');
     const rememberedCredentials = localStorage.getItem('rememberedCredentials');
     
-    if (sessionUser) {
+    if (sessionUser && sessionToken) {
       setUser(JSON.parse(sessionUser));
+      setToken(sessionToken);
       setIsLoading(false);
     } else if (rememberedUser && rememberedCredentials) {
       // Auto-login with remembered credentials
@@ -74,8 +81,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email,
         role: 'admin'
       };
+      const authToken = 'demo-token';
       
       setUser(adminUser);
+      setToken(authToken);
       
       if (rememberMe) {
         // Remember user for auto-login
@@ -86,9 +95,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }));
         // Also save to sessionStorage for current session
         sessionStorage.setItem('user', JSON.stringify(adminUser));
+        sessionStorage.setItem('token', authToken);
       } else {
         // Only save to sessionStorage (expires when browser closes)
         sessionStorage.setItem('user', JSON.stringify(adminUser));
+        sessionStorage.setItem('token', authToken);
         // Clear any remembered credentials
         localStorage.removeItem('rememberedUser');
         localStorage.removeItem('rememberedCredentials');
@@ -101,7 +112,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
     // Keep remembered credentials for auto-login, don't remove them on logout
     // localStorage.removeItem('rememberedUser');
     // localStorage.removeItem('rememberedCredentials');
@@ -119,6 +132,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     user,
     isAuthenticated: !!user,
+    token,
     login,
     logout,
     clearRememberedCredentials,
