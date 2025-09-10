@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Linkedin, Users } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Linkedin, Users, X, GraduationCap, Briefcase, Heart, Award } from 'lucide-react';
 import { TeamMember } from '../../types';
 import Card from '../ui/Card';
 
 const Team: React.FC = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchTeamMembers = async () => {
@@ -30,6 +32,16 @@ const Team: React.FC = () => {
 
     fetchTeamMembers();
   }, []);
+
+  const openModal = (member: TeamMember) => {
+    setSelectedMember(member);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedMember(null);
+  };
 
   if (isLoading) {
     return (
@@ -117,9 +129,19 @@ const Team: React.FC = () => {
 
                     {/* Bio */}
                     {member.bio && (
-                      <p className="text-gray-600 text-sm leading-relaxed">
-                        {member.bio}
-                      </p>
+                      <div 
+                        className="text-gray-600 text-sm leading-relaxed cursor-pointer hover:text-blue-600 transition-colors duration-300"
+                        onClick={() => openModal(member)}
+                        title="Detaylı bilgi için tıklayın"
+                      >
+                        {member.bio.length > 150 
+                          ? `${member.bio.substring(0, 150)}...` 
+                          : member.bio
+                        }
+                        {member.bio.length > 150 && (
+                          <span className="text-blue-600 font-medium ml-1">Devamını oku</span>
+                        )}
+                      </div>
                     )}
 
                     {/* Expertise */}
@@ -194,6 +216,156 @@ const Team: React.FC = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Team Member Detail Modal */}
+      <AnimatePresence>
+        {isModalOpen && selectedMember && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            onClick={closeModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200">
+                      {selectedMember.image ? (
+                        <img
+                          src={selectedMember.image}
+                          alt={selectedMember.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Users className="w-8 h-8 text-blue-500" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">{selectedMember.name}</h2>
+                      <p className="text-blue-600 font-medium">{selectedMember.title}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={closeModal}
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-300"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Bio Content */}
+                {selectedMember.bio && (
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Briefcase className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Profesyonel Geçmiş</h3>
+                    </div>
+                    <div className="prose prose-gray max-w-none">
+                      {selectedMember.bio.split('\n').map((paragraph, index) => (
+                        <p key={index} className="text-gray-700 leading-relaxed mb-4">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Expertise */}
+                {selectedMember.expertise && selectedMember.expertise.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Award className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Uzmanlık Alanları</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      {selectedMember.expertise.map((skill, index) => (
+                        <span
+                          key={index}
+                          className="px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-200"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact Information */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Mail className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">İletişim Bilgileri</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedMember.email && (
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Mail className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <p className="text-sm text-gray-600">E-posta</p>
+                          <a 
+                            href={`mailto:${selectedMember.email}`}
+                            className="text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            {selectedMember.email}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                    {selectedMember.linkedin && (
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Linkedin className="w-5 h-5 text-gray-500" />
+                        <div>
+                          <p className="text-sm text-gray-600">LinkedIn</p>
+                          <a 
+                            href={selectedMember.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            LinkedIn Profili
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 rounded-b-2xl border-t border-gray-200">
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={closeModal}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-300"
+                  >
+                    Kapat
+                  </button>
+                  <a
+                    href="/iletisim"
+                    className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-300"
+                  >
+                    İletişime Geç
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
