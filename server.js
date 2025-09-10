@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3030;
 const pool = new pg.Pool({
   host: 'localhost',
   port: 5432,
-  database: 'letsshine_db',
+  database: 'letsshine',
   user: 'postgres',
   // password olmadan peer authentication kullanılır
 });
