@@ -361,18 +361,15 @@ app.get('/api/applications', async (req, res) => {
 // Team Members API Routes
 app.get('/api/team', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM team_members WHERE is_active = true ORDER BY order_position');
+    const result = await pool.query('SELECT * FROM team_members ORDER BY order_position');
     res.json(result.rows.map(row => ({
       id: row.id.toString(),
       name: row.name,
       title: row.title,
-      bio: row.bio,
       email: row.email,
       linkedin: row.linkedin,
       image: row.image,
       order: row.order_position,
-      isActive: row.is_active,
-      expertise: row.expertise || [],
       createdAt: row.created_at,
       updatedAt: row.updated_at
     })));
@@ -389,13 +386,10 @@ app.get('/api/admin/team', authenticateAdmin, async (req, res) => {
       id: row.id.toString(),
       name: row.name,
       title: row.title,
-      bio: row.bio,
       email: row.email,
       linkedin: row.linkedin,
       image: row.image,
       order: row.order_position,
-      isActive: row.is_active,
-      expertise: row.expertise || [],
       createdAt: row.created_at,
       updatedAt: row.updated_at
     })));
