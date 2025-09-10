@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --primary-color: #0ea5e9;
+  --secondary-color: #f8f9fa;
+  --accent-color: #f97316;
+  --gradient-start: #0ea5e9;
+  --gradient-end: #38bdf8;
+  --text-dark: #333;
+  --text-light: #666;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  color: var(--text-dark);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: 100vh;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #0284c7, #ea580c);
+}
+
+/* Focus styles for accessibility */
+button:focus,
+a:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+/* Custom component styles */
+.btn-primary {
+  @apply bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:shadow-colored hover:-translate-y-1 hover:scale-105;
+}
+
+.btn-outline {
+  @apply border-2 border-primary-500 text-primary-600 font-semibold py-4 px-8 rounded-2xl transition-all duration-300 hover:bg-primary-500 hover:text-white hover:-translate-y-1 hover:scale-105 backdrop-blur-sm;
+}
+
+.card-hover {
+  @apply transition-all duration-500 hover:shadow-large hover:-translate-y-3 hover:scale-105;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%);
+}
+
+.gradient-bg-alt {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #fdba74 100%);
+}
+
+/* Typography */
+.text-gradient {
+  background: linear-gradient(135deg, #0ea5e9, #f97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-alt {
+  background: linear-gradient(135deg, #d946ef, #c026d3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Loading spinner */
+.spinner {
+  @apply inline-block w-4 h-4 border-2 border-current border-r-transparent rounded-full animate-spin;
+}
+
+/* Form styles */
+.form-input {
+  @apply w-full px-6 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 bg-white/80 backdrop-blur-sm hover:bg-white;
+}
+
+.form-textarea {
+  @apply w-full px-6 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 resize-none bg-white/80 backdrop-blur-sm hover:bg-white;
+}
+
+.form-error {
+  @apply text-red-500 text-sm mt-1;
+}
+
+/* Glass morphism effects */
+.glass {
+  @apply bg-white/20 backdrop-blur-md border border-white/30;
+}
+
+.glass-dark {
+  @apply bg-gray-900/20 backdrop-blur-md border border-gray-700/30;
+}
+
+/* Modern card styles */
+.modern-card {
+  @apply bg-white/80 backdrop-blur-sm rounded-3xl shadow-soft border border-gray-100/50 hover:shadow-medium hover:bg-white transition-all duration-500;
+}
+
+.feature-card {
+  @apply bg-gradient-to-br from-white to-gray-50/50 rounded-3xl shadow-soft border border-gray-100/50 hover:shadow-colored hover:-translate-y-2 transition-all duration-500;
+}
+
+/* Mobile responsive utilities */
+@media (max-width: 768px) {
+  .mobile-center {
+    @apply text-center;
+  }
+  
+  .mobile-full {
+    @apply w-full;
+  }
+  
+  .btn-primary {
+    @apply py-3 px-6 text-sm;
+  }
+  
+  .btn-outline {
+    @apply py-3 px-6 text-sm;
+  }
+}
