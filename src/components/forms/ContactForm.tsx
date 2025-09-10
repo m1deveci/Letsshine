@@ -59,7 +59,7 @@ export const ContactForm: React.FC = () => {
       
       <p className="text-gray-600 mb-8 text-lg leading-relaxed">
         Formu doldurarak bizimle iletişime geçin. 24 saat içinde size dönüş yapacağız.
-      </h3>
+      </p>
 
       {submitStatus === 'success' && (
         <div className="mb-8 p-6 bg-gradient-to-r from-success-50 to-success-100 border border-success-200 rounded-2xl">
