@@ -19,6 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import Swal from 'sweetalert2';
 
 interface TeamMemberForm {
   name: string;
@@ -204,20 +205,67 @@ const TeamManagement: React.FC = () => {
       
       if (editingMember) {
         updateTeamMember(editingMember.id, memberData);
+        await Swal.fire({
+          title: 'Başarılı!',
+          text: 'Ekip üyesi başarıyla güncellendi.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
         addTeamMember(memberData);
+        await Swal.fire({
+          title: 'Başarılı!',
+          text: 'Yeni ekip üyesi başarıyla eklendi.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
       }
       
       handleCloseForm();
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Form gönderilirken hata oluştu.');
+      await Swal.fire({
+        title: 'Hata!',
+        text: 'Form gönderilirken hata oluştu.',
+        icon: 'error',
+        confirmButtonText: 'Tamam'
+      });
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Bu ekip üyesini silmek istediğinizden emin misiniz?')) {
-      deleteTeamMember(id);
+  const handleDelete = async (id: string) => {
+    const result = await Swal.fire({
+      title: 'Ekip Üyesini Sil',
+      text: 'Bu ekip üyesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Evet, Sil',
+      cancelButtonText: 'İptal',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
+      try {
+        deleteTeamMember(id);
+        await Swal.fire({
+          title: 'Silindi!',
+          text: 'Ekip üyesi başarıyla silindi.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } catch (error) {
+        await Swal.fire({
+          title: 'Hata!',
+          text: 'Ekip üyesi silinirken hata oluştu.',
+          icon: 'error',
+          confirmButtonText: 'Tamam'
+        });
+      }
     }
   };
 

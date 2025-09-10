@@ -16,6 +16,7 @@ import { Application } from '../../types';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
+import Swal from 'sweetalert2';
 
 const ApplicationsManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -130,9 +131,23 @@ const ApplicationsManagement: React.FC = () => {
       updateApplicationStatus(applicationId, newStatus);
       // Refresh applications from database
       fetchApplications();
+      
+      await Swal.fire({
+        title: 'Başarılı!',
+        text: 'Başvuru durumu başarıyla güncellendi.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
     } catch (error) {
       console.error('Error updating application status:', error);
       setError('Başvuru durumu güncellenirken hata oluştu');
+      await Swal.fire({
+        title: 'Hata!',
+        text: 'Başvuru durumu güncellenirken hata oluştu.',
+        icon: 'error',
+        confirmButtonText: 'Tamam'
+      });
     }
   };
 

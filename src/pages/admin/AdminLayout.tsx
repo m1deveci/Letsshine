@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
+import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Menu, 
   X, 
@@ -13,11 +13,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import Swal from 'sweetalert2';
 
 const AdminLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
@@ -38,8 +40,31 @@ const AdminLayout: React.FC = () => {
     return false;
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: 'Çıkış Yap',
+      text: 'Oturumunuzu sonlandırmak istediğinizden emin misiniz?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Evet, Çıkış Yap',
+      cancelButtonText: 'İptal',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
+      logout();
+      navigate('/');
+      
+      await Swal.fire({
+        title: 'Başarılı!',
+        text: 'Oturumunuz başarıyla sonlandırıldı.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    }
   };
 
   return (

@@ -385,32 +385,169 @@ const defaultTeamMembers: TeamMember[] = [
 ];
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const [services, setServices] = useState<Service[]>(defaultServices);
+  const [services, setServices] = useState<Service[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
-  const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
-  const [aboutContent, setAboutContent] = useState<AboutContent | null>(defaultAboutContent);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(defaultTeamMembers);
+  const [settings, setSettings] = useState<SiteSettings>({
+    title: "Let's Shine",
+    description: 'İnsan Kaynakları Danışmanlığı',
+    logo: '',
+    favicon: '',
+    contactEmail: 'info@letsshine.com.tr',
+    contactPhone: '+90 212 123 45 67',
+    address: 'İstanbul, Türkiye',
+    socialMedia: {
+      linkedin: '',
+      twitter: '',
+      instagram: '',
+      facebook: ''
+    }
+  });
+  const [aboutContent, setAboutContent] = useState<AboutContent | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
-  const addService = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newService: Service = {
-      ...serviceData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    setServices(prev => [...prev, newService]);
+  // Database'den veri çekme fonksiyonları
+  const fetchServices = async () => {
+    try {
+      const response = await fetch('/api/services');
+      if (response.ok) {
+        const data = await response.json();
+        const formattedData = data.map((service: any) => ({
+          ...service,
+          createdAt: new Date(service.createdAt),
+          updatedAt: new Date(service.updatedAt)
+        }));
+        setServices(formattedData);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    }
   };
 
-  const updateService = (id: string, serviceData: Partial<Service>) => {
-    setServices(prev => prev.map(service => 
-      service.id === id 
-        ? { ...service, ...serviceData, updatedAt: new Date() }
-        : service
-    ));
+  const fetchApplications = async () => {
+    try {
+      const response = await fetch('/api/applications');
+      if (response.ok) {
+        const data = await response.json();
+        const formattedData = data.map((app: any) => ({
+          ...app,
+          createdAt: new Date(app.createdAt),
+          updatedAt: new Date(app.updatedAt)
+        }));
+        setApplications(formattedData);
+      }
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    }
   };
 
-  const deleteService = (id: string) => {
-    setServices(prev => prev.filter(service => service.id !== id));
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/settings');
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
+
+  const fetchAboutContent = async () => {
+    try {
+      const response = await fetch('/api/about');
+      if (response.ok) {
+        const data = await response.json();
+        setAboutContent(data);
+      }
+    } catch (error) {
+      console.error('Error fetching about content:', error);
+    }
+  };
+
+  const fetchTeamMembers = async () => {
+    try {
+      const response = await fetch('/api/team');
+      if (response.ok) {
+        const data = await response.json();
+        const formattedData = data.map((member: any) => ({
+          ...member,
+          createdAt: new Date(member.createdAt),
+          updatedAt: new Date(member.updatedAt)
+        }));
+        setTeamMembers(formattedData);
+      }
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+    }
+  };
+
+  // Component mount olduğunda verileri çek
+  useEffect(() => {
+    fetchServices();
+    fetchApplications();
+    fetchSettings();
+    fetchAboutContent();
+    fetchTeamMembers();
+  }, []);
+
+  const addService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const response = await fetch('/api/services', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(serviceData)
+      });
+      
+      if (response.ok) {
+        const newService = await response.json();
+        setServices(prev => [...prev, {
+          ...newService,
+          createdAt: new Date(newService.createdAt),
+          updatedAt: new Date(newService.updatedAt)
+        }]);
+      }
+    } catch (error) {
+      console.error('Error adding service:', error);
+    }
+  };
+
+  const updateService = async (id: string, serviceData: Partial<Service>) => {
+    try {
+      const response = await fetch(`/api/services/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(serviceData)
+      });
+      
+      if (response.ok) {
+        const updatedService = await response.json();
+        setServices(prev => prev.map(service => 
+          service.id === id 
+            ? { ...updatedService, createdAt: new Date(updatedService.createdAt), updatedAt: new Date(updatedService.updatedAt) }
+            : service
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating service:', error);
+    }
+  };
+
+  const deleteService = async (id: string) => {
+    try {
+      const response = await fetch(`/api/services/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        setServices(prev => prev.filter(service => service.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting service:', error);
+    }
   };
 
   const addApplication = (applicationData: Omit<Application, 'id' | 'createdAt' | 'status'>) => {
@@ -474,26 +611,64 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     } : null);
   };
 
-  const addTeamMember = (memberData: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newMember: TeamMember = {
-      ...memberData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    setTeamMembers(prev => [...prev, newMember].sort((a, b) => a.order - b.order));
+  const addTeamMember = async (memberData: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const response = await fetch('/api/team', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(memberData)
+      });
+      
+      if (response.ok) {
+        const newMember = await response.json();
+        setTeamMembers(prev => [...prev, {
+          ...newMember,
+          createdAt: new Date(newMember.createdAt),
+          updatedAt: new Date(newMember.updatedAt)
+        }].sort((a, b) => a.order - b.order));
+      }
+    } catch (error) {
+      console.error('Error adding team member:', error);
+    }
   };
 
-  const updateTeamMember = (id: string, memberData: Partial<TeamMember>) => {
-    setTeamMembers(prev => prev.map(member => 
-      member.id === id 
-        ? { ...member, ...memberData, updatedAt: new Date() }
-        : member
-    ).sort((a, b) => a.order - b.order));
+  const updateTeamMember = async (id: string, memberData: Partial<TeamMember>) => {
+    try {
+      const response = await fetch(`/api/team/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(memberData)
+      });
+      
+      if (response.ok) {
+        const updatedMember = await response.json();
+        setTeamMembers(prev => prev.map(member => 
+          member.id === id 
+            ? { ...updatedMember, createdAt: new Date(updatedMember.createdAt), updatedAt: new Date(updatedMember.updatedAt) }
+            : member
+        ).sort((a, b) => a.order - b.order));
+      }
+    } catch (error) {
+      console.error('Error updating team member:', error);
+    }
   };
 
-  const deleteTeamMember = (id: string) => {
-    setTeamMembers(prev => prev.filter(member => member.id !== id));
+  const deleteTeamMember = async (id: string) => {
+    try {
+      const response = await fetch(`/api/team/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        setTeamMembers(prev => prev.filter(member => member.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting team member:', error);
+    }
   };
 
   const value = {

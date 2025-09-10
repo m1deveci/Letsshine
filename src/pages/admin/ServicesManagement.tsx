@@ -15,6 +15,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import ServiceModal from '../../components/ServiceModal';
+import Swal from 'sweetalert2';
 
 const ServicesManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,20 +41,71 @@ const ServicesManagement: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (serviceId: string) => {
-    if (window.confirm('Bu hizmeti silmek istediğinizden emin misiniz?')) {
-      deleteService(serviceId);
+  const handleDelete = async (serviceId: string) => {
+    const result = await Swal.fire({
+      title: 'Hizmeti Sil',
+      text: 'Bu hizmeti silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Evet, Sil',
+      cancelButtonText: 'İptal',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
+      try {
+        deleteService(serviceId);
+        await Swal.fire({
+          title: 'Silindi!',
+          text: 'Hizmet başarıyla silindi.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } catch (error) {
+        await Swal.fire({
+          title: 'Hata!',
+          text: 'Hizmet silinirken hata oluştu.',
+          icon: 'error',
+          confirmButtonText: 'Tamam'
+        });
+      }
     }
   };
 
-  const handleSave = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> | Service) => {
-    if (editingService) {
-      updateService(editingService.id, serviceData);
-    } else {
-      addService(serviceData);
+  const handleSave = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> | Service) => {
+    try {
+      if (editingService) {
+        updateService(editingService.id, serviceData);
+        await Swal.fire({
+          title: 'Başarılı!',
+          text: 'Hizmet başarıyla güncellendi.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } else {
+        addService(serviceData);
+        await Swal.fire({
+          title: 'Başarılı!',
+          text: 'Yeni hizmet başarıyla eklendi.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
+      setIsModalOpen(false);
+      setEditingService(null);
+    } catch (error) {
+      await Swal.fire({
+        title: 'Hata!',
+        text: 'Hizmet kaydedilirken hata oluştu.',
+        icon: 'error',
+        confirmButtonText: 'Tamam'
+      });
     }
-    setIsModalOpen(false);
-    setEditingService(null);
   };
 
   return (
