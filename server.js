@@ -473,7 +473,7 @@ app.get('/api/applications', async (req, res) => {
 // Team Members API Routes
 app.get('/api/team', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM team_members ORDER BY order_position');
+    const result = await pool.query('SELECT * FROM team_members WHERE is_active = true ORDER BY order_position');
     res.json(result.rows.map(row => ({
       id: row.id.toString(),
       name: row.name,
@@ -483,6 +483,7 @@ app.get('/api/team', async (req, res) => {
       linkedin: row.linkedin,
       image: row.image,
       order: row.order_position,
+      isActive: row.is_active,
       expertise: row.expertise || [],
       createdAt: row.created_at,
       updatedAt: row.updated_at
@@ -496,11 +497,11 @@ app.get('/api/team', async (req, res) => {
 // Public Team CRUD endpoints
 app.post('/api/team', async (req, res) => {
   try {
-    const { name, title, bio, email, linkedin, image, order, expertise } = req.body;
+    const { name, title, bio, email, linkedin, image, order, isActive, expertise } = req.body;
     
     const result = await pool.query(
-      'INSERT INTO team_members (name, title, bio, email, linkedin, image, order_position, expertise) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [name, title, bio, email, linkedin, image, order || 0, expertise || []]
+      'INSERT INTO team_members (name, title, bio, email, linkedin, image, order_position, is_active, expertise) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [name, title, bio, email, linkedin, image, order || 0, isActive !== undefined ? isActive : true, expertise || []]
     );
     
     const member = result.rows[0];
@@ -513,6 +514,7 @@ app.post('/api/team', async (req, res) => {
       linkedin: member.linkedin,
       image: member.image,
       order: member.order_position,
+      isActive: member.is_active,
       expertise: member.expertise || [],
       createdAt: member.created_at,
       updatedAt: member.updated_at
@@ -526,11 +528,11 @@ app.post('/api/team', async (req, res) => {
 app.put('/api/team/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, title, bio, email, linkedin, image, order, expertise } = req.body;
+    const { name, title, bio, email, linkedin, image, order, isActive, expertise } = req.body;
     
     const result = await pool.query(
-      'UPDATE team_members SET name = $1, title = $2, bio = $3, email = $4, linkedin = $5, image = $6, order_position = $7, expertise = $8, updated_at = NOW() WHERE id = $9 RETURNING *',
-      [name, title, bio, email, linkedin, image, order || 0, expertise || [], id]
+      'UPDATE team_members SET name = $1, title = $2, bio = $3, email = $4, linkedin = $5, image = $6, order_position = $7, is_active = $8, expertise = $9, updated_at = NOW() WHERE id = $10 RETURNING *',
+      [name, title, bio, email, linkedin, image, order || 0, isActive !== undefined ? isActive : true, expertise || [], id]
     );
     
     if (result.rows.length === 0) {
@@ -547,6 +549,7 @@ app.put('/api/team/:id', async (req, res) => {
       linkedin: member.linkedin,
       image: member.image,
       order: member.order_position,
+      isActive: member.is_active,
       expertise: member.expertise || [],
       createdAt: member.created_at,
       updatedAt: member.updated_at
@@ -586,6 +589,7 @@ app.get('/api/admin/team', authenticateAdmin, async (req, res) => {
       linkedin: row.linkedin,
       image: row.image,
       order: row.order_position,
+      isActive: row.is_active,
       expertise: row.expertise || [],
       createdAt: row.created_at,
       updatedAt: row.updated_at
