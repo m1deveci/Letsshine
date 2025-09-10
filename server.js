@@ -3,6 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const pg = require('pg');
 const multer = require('multer');
+const sharp = require('sharp');
 
 const app = express();
 const PORT = process.env.PORT || 3030;
@@ -678,17 +679,36 @@ app.delete('/api/admin/team/:id', authenticateAdmin, async (req, res) => {
 });
 
 // File upload endpoint for team photos
-app.post('/api/admin/upload', authenticateAdmin, upload.single('image'), (req, res) => {
+app.post('/api/admin/upload', authenticateAdmin, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
-    const fileUrl = `/uploads/${req.file.filename}`;
+    const originalPath = req.file.path;
+    const resizedPath = originalPath.replace(/\.[^/.]+$/, '_resized.jpg');
+    
+    // Resize image to max 800x800 with quality 85%
+    await sharp(originalPath)
+      .resize(800, 800, {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .jpeg({ quality: 85 })
+      .toFile(resizedPath);
+    
+    // Delete original file
+    const fs = require('fs');
+    fs.unlinkSync(originalPath);
+    
+    // Update filename to resized version
+    const resizedFilename = req.file.filename.replace(/\.[^/.]+$/, '_resized.jpg');
+    const fileUrl = `/uploads/${resizedFilename}`;
+    
     res.json({ 
-      message: 'File uploaded successfully',
+      message: 'File uploaded and resized successfully',
       url: fileUrl,
-      filename: req.file.filename 
+      filename: resizedFilename 
     });
   } catch (error) {
     console.error('Error uploading file:', error);

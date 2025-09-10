@@ -141,16 +141,7 @@ const TeamManagement: React.FC = () => {
         return;
       }
       
-      // Validate file size (20MB limit)
-      if (file.size > 20 * 1024 * 1024) {
-        await Swal.fire({
-          icon: 'warning',
-          title: 'Dosya Çok Büyük!',
-          text: 'Dosya boyutu 20MB\'dan küçük olmalıdır.',
-          confirmButtonText: 'Tamam'
-        });
-        return;
-      }
+      // File size validation removed - backend will resize automatically
 
       setFileUpload(prev => ({
         ...prev,
@@ -490,7 +481,7 @@ const TeamManagement: React.FC = () => {
                             <p className="mb-2 text-sm text-gray-500">
                               <span className="font-semibold">Fotoğraf seçmek için tıklayın</span>
                             </p>
-                            <p className="text-xs text-gray-500">JPG, PNG, GIF (MAX. 20MB)</p>
+                            <p className="text-xs text-gray-500">JPG, PNG, GIF (Otomatik boyutlandırılır)</p>
                           </div>
                           <input
                             type="file"
