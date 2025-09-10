@@ -736,6 +736,17 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  // Serve React app for all other routes
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 // Start server
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`Server running on http://127.0.0.1:${PORT}`);
