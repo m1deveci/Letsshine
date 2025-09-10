@@ -1,0 +1,111 @@
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X } from 'lucide-react';
+import { useApp } from '../../contexts/AppContext';
+
+const Header: React.FC = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const { settings } = useApp();
+
+  const navigation = [
+    { name: 'Ana Sayfa', href: '/' },
+    { name: 'Hakkımızda', href: '/hakkimizda' },
+    { name: 'Hizmetlerimiz', href: '/hizmetler' },
+    { name: 'İletişim', href: '/iletisim' }
+  ];
+
+  const isActive = (path: string) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
+
+  return (
+    <header className="bg-white shadow-sm sticky top-0 z-50">
+      {/* Main Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
+            <div className="flex items-center">
+              {settings.logo ? (
+                <img 
+                  src={settings.logo} 
+                  alt="Logo" 
+                  className="h-10 w-auto mr-3 object-contain"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center mr-3">
+                  <span className="text-white font-bold text-lg">LS</span>
+                </div>
+              )}
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">{settings.title || "Let's Shine"}</h1>
+                <p className="text-xs text-gray-500">İnsan Kaynakları</p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`text-sm font-medium transition-colors duration-200 ${
+                  isActive(item.href)
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-blue-600'
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            type="button"
+            className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-white border-t border-gray-200"
+          >
+            <nav className="px-4 py-4 space-y-2">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`block px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                    isActive(item.href)
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+};
+
+export default Header;

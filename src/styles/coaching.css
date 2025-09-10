@@ -1,0 +1,191 @@
+/* Koçluk Sayfası Özel Stilleri */
+.coaching-services {
+  @apply max-w-7xl mx-auto px-4 py-12;
+}
+
+/* FontAwesome iconları yerine geçici olarak text iconları */
+.service-icon i.fas {
+  @apply text-2xl;
+}
+
+.service-icon i.fas:before {
+  content: "🎯";
+}
+
+.service-icon i.fa-graduation-cap:before {
+  content: "🎓";
+}
+
+.service-icon i.fa-user-tie:before {
+  content: "👔";
+}
+
+.service-icon i.fa-user-clock:before {
+  content: "⏰";
+}
+
+.service-icon i.fa-users:before {
+  content: "👥";
+}
+
+.service-icon i.fa-running:before {
+  content: "🏃";
+}
+
+.service-icon i.fa-child:before {
+  content: "👶";
+}
+
+.service-icon i.fa-handshake:before {
+  content: "🤝";
+}
+
+.hero-section {
+  @apply text-center mb-16;
+}
+
+.section-title {
+  @apply text-4xl md:text-5xl font-bold text-gray-900 mb-4;
+}
+
+.section-subtitle {
+  @apply text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed;
+}
+
+.services-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16;
+}
+
+.service-card {
+  @apply bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100;
+}
+
+.service-icon {
+  @apply w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600 text-2xl;
+}
+
+.service-card h3 {
+  @apply text-xl font-bold text-gray-900 mb-4;
+}
+
+.service-card p {
+  @apply text-gray-600 mb-6 leading-relaxed;
+}
+
+.service-card ul {
+  @apply space-y-2;
+}
+
+.service-card li {
+  @apply text-sm text-gray-600 flex items-start;
+}
+
+.service-card li::before {
+  content: "✓";
+  @apply text-blue-500 font-bold mr-2 mt-0.5 flex-shrink-0;
+}
+
+.coaching-approach {
+  @apply bg-gray-50 rounded-3xl p-12 mb-16;
+}
+
+.coaching-approach h3 {
+  @apply text-3xl font-bold text-gray-900 text-center mb-12;
+}
+
+.approach-grid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-8;
+}
+
+.approach-item {
+  @apply text-center;
+}
+
+.approach-item h4 {
+  @apply text-xl font-semibold text-blue-600 mb-4;
+}
+
+.approach-item p {
+  @apply text-gray-600 leading-relaxed;
+}
+
+.process-section {
+  @apply bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl p-12;
+}
+
+.process-section h3 {
+  @apply text-3xl font-bold text-gray-900 text-center mb-12;
+}
+
+.process-steps {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8;
+}
+
+.step {
+  @apply text-center relative;
+}
+
+.step-number {
+  @apply w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4;
+}
+
+.step h4 {
+  @apply text-lg font-semibold text-gray-900 mb-3;
+}
+
+.step p {
+  @apply text-gray-600 text-sm leading-relaxed;
+}
+
+/* Responsive düzenlemeler */
+@media (max-width: 768px) {
+  .services-grid {
+    @apply grid-cols-1 gap-6;
+  }
+  
+  .service-card {
+    @apply p-6;
+  }
+  
+  .coaching-approach,
+  .process-section {
+    @apply p-8;
+  }
+  
+  .section-title {
+    @apply text-3xl;
+  }
+}
+
+/* Hover efektleri */
+.service-card:hover .service-icon {
+  @apply bg-blue-600 text-white scale-110;
+}
+
+.service-card:hover h3 {
+  @apply text-blue-600;
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.service-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.service-card:nth-child(1) { animation-delay: 0.1s; }
+.service-card:nth-child(2) { animation-delay: 0.2s; }
+.service-card:nth-child(3) { animation-delay: 0.3s; }
+.service-card:nth-child(4) { animation-delay: 0.4s; }
+.service-card:nth-child(5) { animation-delay: 0.5s; }
+.service-card:nth-child(6) { animation-delay: 0.6s; }
+.service-card:nth-child(7) { animation-delay: 0.7s; }

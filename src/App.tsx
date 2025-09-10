@@ -1,0 +1,82 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './contexts/AuthContext';
+import { AppProvider } from './contexts/AppContext';
+
+// Layout Components
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+
+// Public Pages
+import HomePage from './pages/HomePage';
+import About from './pages/About';
+import ServicesPage from './pages/ServicesPage';
+import ServiceDetailPage from './pages/ServiceDetailPage';
+import ContactPage from './pages/ContactPage';
+
+// Admin Pages
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import LoginPage from './pages/admin/LoginPage';
+import AboutManagement from './pages/admin/AboutManagement';
+import ServicesManagement from './pages/admin/ServicesManagement';
+import TeamManagement from './pages/admin/TeamManagement';
+import ApplicationsManagement from './pages/admin/ApplicationsManagement';
+import SettingsPage from './pages/admin/SettingsPage';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppProvider>
+          <Router>
+            <Routes>
+              {/* Public Routes */}
+              <Route
+                path="/*"
+                element={
+                  <div className="flex flex-col min-h-screen">
+                    <Header />
+                    <main className="flex-1">
+                      <Routes>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/hakkimizda" element={<About />} />
+                        <Route path="/hizmetler" element={<ServicesPage />} />
+                        <Route path="/hizmet/:slug" element={<ServiceDetailPage />} />
+                        <Route path="/iletisim" element={<ContactPage />} />
+                      </Routes>
+                    </main>
+                    <Footer />
+                  </div>
+                }
+              />
+
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<LoginPage />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="about" element={<AboutManagement />} />
+                <Route path="services" element={<ServicesManagement />} />
+                <Route path="team" element={<TeamManagement />} />
+                <Route path="applications" element={<ApplicationsManagement />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+            </Routes>
+          </Router>
+        </AppProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
