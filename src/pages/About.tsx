@@ -5,7 +5,7 @@ import { useApp } from '../contexts/AppContext';
 const About: React.FC = () => {
   const { aboutContent } = useApp();
 
-  if (!aboutContent || !aboutContent.isActive) {
+  if (!aboutContent) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -58,60 +58,37 @@ const About: React.FC = () => {
         variants={sectionVariants}
         className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20"
       >
-        {section.type === 'text' ? (
-          <div className="lg:col-span-2">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="text-center max-w-4xl mx-auto"
-            >
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-                {section.title}
-              </h2>
-              <div 
-                className="text-lg text-gray-600 leading-relaxed prose prose-lg mx-auto"
-                dangerouslySetInnerHTML={{ __html: section.content }}
-              />
-            </motion.div>
+        {/* Text Content */}
+        <motion.div 
+          className={`${isEven ? '' : 'lg:order-2'}`}
+          initial={{ opacity: 0, x: isEven ? -50 : 50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
+            {section.title}
+          </h3>
+          <div className="text-gray-600 leading-relaxed prose max-w-none">
+            {section.content}
           </div>
-        ) : (
-          <>
-            {/* Text Content */}
-            <motion.div 
-              className={`${(section.type === 'text-image' && !isEven) || (section.type === 'image-text' && isEven) ? 'lg:order-2' : ''}`}
-              initial={{ opacity: 0, x: isEven ? -50 : 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
-                {section.title}
-              </h3>
-              <div 
-                className="text-gray-600 leading-relaxed prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: section.content }}
+        </motion.div>
+        
+        {/* Image */}
+        {section.image && (
+          <motion.div
+            variants={imageVariants}
+            className={`${isEven ? '' : 'lg:order-1'}`}
+          >
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl group">
+              <img 
+                src={section.image}
+                alt={section.title}
+                className="w-full h-96 object-cover transform group-hover:scale-105 transition-transform duration-700"
               />
-            </motion.div>
-            
-            {/* Image */}
-            {section.image && (
-              <motion.div
-                variants={imageVariants}
-                className={`${(section.type === 'text-image' && !isEven) || (section.type === 'image-text' && isEven) ? 'lg:order-1' : ''}`}
-              >
-                <div className="relative overflow-hidden rounded-2xl shadow-2xl group">
-                  <img 
-                    src={section.image}
-                    alt={section.title}
-                    className="w-full h-96 object-cover transform group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
-              </motion.div>
-            )}
-          </>
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            </div>
+          </motion.div>
         )}
       </motion.div>
     );
@@ -154,33 +131,11 @@ const About: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
               className="prose prose-lg mx-auto text-gray-600"
-              dangerouslySetInnerHTML={{ __html: aboutContent.content }}
-            />
+            >
+              {aboutContent.description}
+            </motion.div>
           </motion.div>
 
-          {/* Hero Image */}
-          {aboutContent.heroImage && (
-            <motion.div
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 1, delay: 0.8 }}
-              className="mt-16"
-            >
-              <div className="relative max-w-4xl mx-auto">
-                <div className="relative overflow-hidden rounded-3xl shadow-3xl">
-                  <img 
-                    src={aboutContent.heroImage}
-                    alt={aboutContent.title}
-                    className="w-full h-96 sm:h-[32rem] object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent" />
-                </div>
-                {/* Decorative elements */}
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-blue-500 rounded-full opacity-60" />
-                <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-blue-300 rounded-full opacity-40" />
-              </div>
-            </motion.div>
-          )}
         </div>
       </motion.section>
 
