@@ -47,16 +47,16 @@ const SettingsPage: React.FC = () => {
   } = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      title: settings.title,
-      description: settings.description,
-      phone: settings.phone,
-      email: settings.email,
-      address: settings.address,
-      smtpHost: settings.smtp.host,
-      smtpPort: settings.smtp.port,
-      smtpUsername: settings.smtp.username,
-      smtpPassword: settings.smtp.password,
-      smtpFromEmail: settings.smtp.fromEmail
+      title: settings.title || '',
+      description: settings.description || '',
+      phone: settings.phone || '',
+      email: settings.email || '',
+      address: settings.address || '',
+      smtpHost: settings.smtp?.host || '',
+      smtpPort: settings.smtp?.port || 587,
+      smtpUsername: settings.smtp?.username || '',
+      smtpPassword: settings.smtp?.password || '',
+      smtpFromEmail: settings.smtp?.fromEmail || ''
     }
   });
 

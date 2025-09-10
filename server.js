@@ -155,10 +155,37 @@ app.get('/api/settings', async (req, res) => {
         title: 'Let\'s Shine',
         description: 'İnsan Odaklı Çözümler',
         logo: null,
-        favicon: null
+        favicon: null,
+        phone: '+90 (XXX) XXX XX XX',
+        email: 'info@letsshine.com',
+        address: 'İzmir, Türkiye',
+        smtp: {
+          host: '',
+          port: 587,
+          username: '',
+          password: '',
+          fromEmail: 'info@letsshine.com'
+        }
       });
     }
-    res.json(result.rows[0]);
+    
+    const row = result.rows[0];
+    res.json({
+      title: row.title,
+      description: row.description,
+      logo: row.logo,
+      favicon: row.favicon,
+      phone: row.phone,
+      email: row.email,
+      address: row.address,
+      smtp: {
+        host: row.smtp_host || '',
+        port: row.smtp_port || 587,
+        username: row.smtp_username || '',
+        password: row.smtp_password || '',
+        fromEmail: row.smtp_from_email || 'info@letsshine.com'
+      }
+    });
   } catch (error) {
     console.error('Error fetching settings:', error);
     res.status(500).json({ error: 'Internal server error' });
