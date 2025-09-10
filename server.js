@@ -228,6 +228,85 @@ app.get('/api/admin/services', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Services CRUD endpoints
+app.post('/api/services', async (req, res) => {
+  try {
+    const { title, description, content, features, icon, slug, order } = req.body;
+    
+    const result = await pool.query(
+      'INSERT INTO services (title, description, content, features, icon, slug, order_position) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [title, description, content, features || [], icon, slug, order || 0]
+    );
+    
+    const service = result.rows[0];
+    res.status(201).json({
+      id: service.id.toString(),
+      title: service.title,
+      description: service.description,
+      content: service.content,
+      features: service.features || [],
+      icon: service.icon,
+      slug: service.slug,
+      order: service.order_position,
+      createdAt: service.created_at,
+      updatedAt: service.updated_at
+    });
+  } catch (error) {
+    console.error('Error creating service:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/services/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, content, features, icon, slug, order } = req.body;
+    
+    const result = await pool.query(
+      'UPDATE services SET title = $1, description = $2, content = $3, features = $4, icon = $5, slug = $6, order_position = $7, updated_at = NOW() WHERE id = $8 RETURNING *',
+      [title, description, content, features || [], icon, slug, order || 0, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+    
+    const service = result.rows[0];
+    res.json({
+      id: service.id.toString(),
+      title: service.title,
+      description: service.description,
+      content: service.content,
+      features: service.features || [],
+      icon: service.icon,
+      slug: service.slug,
+      order: service.order_position,
+      createdAt: service.created_at,
+      updatedAt: service.updated_at
+    });
+  } catch (error) {
+    console.error('Error updating service:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/services/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query('DELETE FROM services WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+    
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.put('/api/admin/applications/:id/status', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
