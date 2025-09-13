@@ -12,6 +12,7 @@ import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
 import About from './pages/About';
 import TeamPage from './pages/TeamPage';
+import VisionMissionPage from './pages/VisionMissionPage';
 import ServicesPage from './pages/ServicesPage';
 import ServiceDetailPage from './pages/ServiceDetailPage';
 import ContactPage from './pages/ContactPage';
@@ -55,6 +56,7 @@ function App() {
                       <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/hakkimizda" element={<TeamPage />} />
+                        <Route path="/vizyon-misyon" element={<VisionMissionPage />} />
                         <Route path="/hizmetler" element={<ServicesPage />} />
                         <Route path="/hizmet/:slug" element={<ServiceDetailPage />} />
                         <Route path="/iletisim" element={<ContactPage />} />

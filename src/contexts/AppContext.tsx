@@ -109,8 +109,9 @@ const defaultHeroContent: HeroContent = {
 const defaultNavigationItems: NavigationItem[] = [
   { id: '1', name: 'Ana Sayfa', href: '/', order: 1, isActive: true },
   { id: '2', name: 'Hakkımızda', href: '/hakkimizda', order: 2, isActive: true },
-  { id: '3', name: 'Hizmetlerimiz', href: '/hizmetler', order: 3, isActive: true },
-  { id: '4', name: 'İletişim', href: '/iletisim', order: 4, isActive: true }
+  { id: '3', name: 'Vizyon & Misyon', href: '/vizyon-misyon', order: 3, isActive: true },
+  { id: '4', name: 'Hizmetlerimiz', href: '/hizmetler', order: 4, isActive: true },
+  { id: '5', name: 'İletişim', href: '/iletisim', order: 5, isActive: true }
 ];
 
 interface AppProviderProps {
