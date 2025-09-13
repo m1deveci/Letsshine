@@ -108,48 +108,54 @@ const SettingsPage: React.FC = () => {
       return;
     }
 
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Dosya boyutu 2MB\'dan küçük olmalıdır.');
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Dosya boyutu 5MB\'dan küçük olmalıdır.');
       return;
     }
 
     // Create a preview
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const result = e.target?.result as string;
       setLogoPreview(result);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
       
-      // Update settings immediately with the preview URL
-      await updateSettings({ logo: result });
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      const logoUrl = result.url;
+      
+      // Update settings with the uploaded file URL
+      await updateSettings({ logo: logoUrl });
       
       // Show success message
-      setSuccessMessage('Logo başarıyla yüklendi! Header ve admin panel sidebar\'da güncellendi.');
+      setSuccessMessage('Logo başarıyla yüklendi ve veritabanına kaydedildi!');
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
         setSuccessMessage('');
       }, 3000);
       
-      // Force form to be dirty by updating a field
-      setValue('title', settings.title || 'Let\'s Shine', { shouldDirty: true, shouldTouch: true });
-      setValue('description', settings.description || 'İnsan Odaklı Çözümler', { shouldDirty: true, shouldTouch: true });
-      
-      // Trigger validation to ensure form state is updated
-      await trigger();
-    };
-    reader.readAsDataURL(file);
-
-    // In a real app, you would upload to a server here
-    try {
-      const formData = new FormData();
-      formData.append('logo', file);
-      
-      // Simulate server upload
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
     } catch (error) {
       console.error('Logo upload failed:', error);
+      alert('Logo yüklenirken hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
@@ -157,37 +163,63 @@ const SettingsPage: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Lütfen geçerli bir resim dosyası seçin.');
+      return;
+    }
+
+    // Validate file size (max 1MB for favicon)
+    if (file.size > 1 * 1024 * 1024) {
+      alert('Favicon dosya boyutu 1MB\'dan küçük olmalıdır.');
+      return;
+    }
+
     // Create a preview
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const result = e.target?.result as string;
       setFaviconPreview(result);
-      
-      // Update settings immediately with the preview URL
-      await updateSettings({ favicon: result });
-      
-      // Update favicon in DOM immediately
-      updateFaviconInDOM(result);
-      
-      // Force form to be dirty by updating a field
-      setValue('title', settings.title || 'Let\'s Shine', { shouldDirty: true, shouldTouch: true });
-      setValue('description', settings.description || 'İnsan Odaklı Çözümler', { shouldDirty: true, shouldTouch: true });
-      
-      // Trigger validation to ensure form state is updated
-      await trigger();
     };
     reader.readAsDataURL(file);
 
-    // In a real app, you would upload to a server here
+    // Upload to server
     try {
       const formData = new FormData();
-      formData.append('favicon', file);
+      formData.append('image', file);
       
-      // Simulate server upload
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      const faviconUrl = result.url;
+      
+      // Update settings with the uploaded file URL
+      await updateSettings({ favicon: faviconUrl });
+      
+      // Update favicon in DOM immediately
+      updateFaviconInDOM(faviconUrl);
+      
+      // Show success message
+      setSuccessMessage('Favicon başarıyla yüklendi ve veritabanına kaydedildi!');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setSuccessMessage('');
+      }, 3000);
       
     } catch (error) {
       console.error('Favicon upload failed:', error);
+      alert('Favicon yüklenirken hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 

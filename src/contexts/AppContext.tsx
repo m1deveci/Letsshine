@@ -297,6 +297,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     fetchSettings();
     fetchAboutContent();
     fetchTeamMembers();
+    fetchHeroContent();
   }, []);
 
   const addService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -566,8 +567,50 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   // Hero Content Management
-  const updateHeroContent = (hero: HeroContent) => {
-    setHeroContent(hero);
+  const fetchHeroContent = async () => {
+    try {
+      const response = await fetch('/api/hero');
+      if (response.ok) {
+        const data = await response.json();
+        setHeroContent({
+          ...data,
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt)
+        });
+      } else {
+        // Use default if not found
+        setHeroContent(defaultHeroContent);
+      }
+    } catch (error) {
+      console.error('Error fetching hero content:', error);
+      setHeroContent(defaultHeroContent);
+    }
+  };
+
+  const updateHeroContent = async (hero: HeroContent) => {
+    try {
+      const response = await fetch('/api/admin/hero', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(hero)
+      });
+      
+      if (response.ok) {
+        const updatedHero = await response.json();
+        setHeroContent({
+          ...updatedHero,
+          createdAt: new Date(updatedHero.createdAt),
+          updatedAt: new Date(updatedHero.updatedAt)
+        });
+      } else {
+        throw new Error('Failed to update hero content');
+      }
+    } catch (error) {
+      console.error('Error updating hero content:', error);
+      throw error;
+    }
   };
 
   // Navigation Management

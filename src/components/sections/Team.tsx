@@ -209,10 +209,6 @@ const Team: React.FC = () => {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 text-sm font-medium rounded-full mb-4">
-            <Users className="w-4 h-4 mr-2" />
-            Uzman Ekibimiz
-          </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
             İnsan Odaklı{' '}
             <span className="text-blue-600">Profesyonel Ekibimiz</span>
@@ -237,9 +233,6 @@ const Team: React.FC = () => {
                 <Crown className="w-4 h-4 mr-2" />
                 Kurucu Ortaklarımız
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Liderlik ve Vizyon
-              </h3>
               <p className="text-gray-600 max-w-2xl mx-auto">
                 Şirketimizin temellerini atan ve vizyonumuzu şekillendiren kurucu ortaklarımız.
               </p>

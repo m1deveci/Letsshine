@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Menu, 
@@ -20,10 +20,39 @@ import Swal from 'sweetalert2';
 
 const AdminLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0);
+  const { isAuthenticated, logout, token } = useAuth();
   const { settings } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Fetch pending applications count
+  const fetchPendingApplicationsCount = async () => {
+    try {
+      const response = await fetch('/api/admin/applications', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const pendingCount = data.filter((app: any) => app.status === 'pending').length;
+        setPendingApplicationsCount(pendingCount);
+      }
+    } catch (error) {
+      console.error('Error fetching pending applications count:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      fetchPendingApplicationsCount();
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchPendingApplicationsCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, token]);
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
@@ -133,6 +162,11 @@ const AdminLayout: React.FC = () => {
                   >
                     <item.icon className="w-5 h-5 mr-3" />
                     {item.name}
+                    {item.name === 'Başvurular' && pendingApplicationsCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                        {pendingApplicationsCount}
+                      </span>
+                    )}
                   </Link>
                 ))}
               </nav>
@@ -182,6 +216,11 @@ const AdminLayout: React.FC = () => {
               >
                 <item.icon className="w-5 h-5 mr-3" />
                 {item.name}
+                {item.name === 'Başvurular' && pendingApplicationsCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                    {pendingApplicationsCount}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>

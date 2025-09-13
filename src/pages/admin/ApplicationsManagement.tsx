@@ -8,7 +8,8 @@ import {
   Search,
   Filter,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Trash2
 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -53,7 +54,7 @@ const ApplicationsManagement: React.FC = () => {
         id: app.id.toString(),
         serviceId: app.service_id,
         serviceName: app.service_name,
-        createdAt: new Date(app.created_at)
+        createdAt: app.created_at ? new Date(app.created_at) : new Date()
       }));
       
       setDbApplications(formattedData);
@@ -154,6 +155,54 @@ const ApplicationsManagement: React.FC = () => {
   const handleViewDetails = (application: Application) => {
     setSelectedApplication(application);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteApplication = async (applicationId: string) => {
+    const result = await Swal.fire({
+      title: 'Emin misiniz?',
+      text: 'Bu başvuruyu silmek istediğinizden emin misiniz?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, Sil!',
+      cancelButtonText: 'İptal'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/api/admin/applications/${applicationId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete application');
+        }
+        
+        // Refresh applications from database
+        fetchApplications();
+        
+        await Swal.fire({
+          title: 'Silindi!',
+          text: 'Başvuru başarıyla silindi.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } catch (error) {
+        console.error('Error deleting application:', error);
+        await Swal.fire({
+          title: 'Hata!',
+          text: 'Başvuru silinirken hata oluştu.',
+          icon: 'error',
+          confirmButtonText: 'Tamam'
+        });
+      }
+    }
   };
 
   return (
@@ -332,6 +381,16 @@ const ApplicationsManagement: React.FC = () => {
                   leftIcon={<Eye className="w-4 h-4" />}
                 >
                   Detay
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteApplication(application.id)}
+                  leftIcon={<Trash2 className="w-4 h-4" />}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  Sil
                 </Button>
               </div>
             </div>

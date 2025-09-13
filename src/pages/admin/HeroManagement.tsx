@@ -54,7 +54,7 @@ const HeroManagement: React.FC = () => {
         updatedAt: new Date()
       };
       
-      updateHeroContent(updatedHero);
+      await updateHeroContent(updatedHero);
       
       setSuccessMessage('Hero içeriği başarıyla güncellendi!');
       setShowSuccess(true);
@@ -64,6 +64,12 @@ const HeroManagement: React.FC = () => {
       }, 3000);
     } catch (error) {
       console.error('Error updating hero content:', error);
+      setSuccessMessage('Hero içeriği güncellenirken hata oluştu!');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setSuccessMessage('');
+      }, 3000);
     } finally {
       setIsSaving(false);
     }
@@ -87,11 +93,39 @@ const HeroManagement: React.FC = () => {
 
     // Create a preview
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const result = e.target?.result as string;
       setValue('heroImage', result);
     };
     reader.readAsDataURL(file);
+
+    // Upload to server
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      const imageUrl = result.url;
+      
+      // Update form with the uploaded file URL
+      setValue('heroImage', imageUrl);
+      
+    } catch (error) {
+      console.error('Hero image upload failed:', error);
+      alert('Hero görseli yüklenirken hata oluştu. Lütfen tekrar deneyin.');
+    }
   };
 
   const addFeature = () => {
@@ -118,7 +152,7 @@ const HeroManagement: React.FC = () => {
     updateHeroContent(updatedHero);
   };
 
-  const addStat = () => {
+  const addStat = async () => {
     const currentStats = heroContent?.stats || [];
     const number = prompt('İstatistik sayısı (örn: 30+):');
     const label = prompt('İstatistik etiketi (örn: Başarılı Proje):');
@@ -128,11 +162,15 @@ const HeroManagement: React.FC = () => {
         stats: [...currentStats, { number: number.trim(), label: label.trim() }],
         updatedAt: new Date()
       };
-      updateHeroContent(updatedHero);
+      try {
+        await updateHeroContent(updatedHero);
+      } catch (error) {
+        console.error('Error adding stat:', error);
+      }
     }
   };
 
-  const removeStat = (index: number) => {
+  const removeStat = async (index: number) => {
     const currentStats = heroContent?.stats || [];
     const updatedStats = currentStats.filter((_, i) => i !== index);
     const updatedHero: HeroContent = {
@@ -140,11 +178,15 @@ const HeroManagement: React.FC = () => {
       stats: updatedStats,
       updatedAt: new Date()
     };
-    updateHeroContent(updatedHero);
+    try {
+      await updateHeroContent(updatedHero);
+    } catch (error) {
+      console.error('Error removing stat:', error);
+    }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

@@ -418,9 +418,148 @@ app.put('/api/settings', authenticateAdmin, async (req, res) => {
 app.get('/api/admin/applications', authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM applications ORDER BY created_at DESC');
-    res.json(result.rows);
+    res.json(result.rows.map(row => ({
+      id: row.id.toString(),
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      serviceId: row.service_id,
+      serviceName: row.service_name,
+      category: row.category,
+      message: row.message,
+      status: row.status,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    })));
   } catch (error) {
     console.error('Error fetching applications:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete application endpoint
+app.delete('/api/admin/applications/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query('DELETE FROM applications WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+    
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting application:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Hero Content API endpoints
+app.get('/api/hero', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM hero_content WHERE is_active = true ORDER BY id DESC LIMIT 1');
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Hero content not found' });
+    }
+    
+    const row = result.rows[0];
+    res.json({
+      id: row.id.toString(),
+      title: row.title,
+      subtitle: row.subtitle,
+      description: row.description,
+      features: row.features || [],
+      stats: row.stats || [],
+      heroImage: row.hero_image,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    });
+  } catch (error) {
+    console.error('Error fetching hero content:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/admin/hero', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM hero_content ORDER BY id DESC LIMIT 1');
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Hero content not found' });
+    }
+    
+    const row = result.rows[0];
+    res.json({
+      id: row.id.toString(),
+      title: row.title,
+      subtitle: row.subtitle,
+      description: row.description,
+      features: row.features || [],
+      stats: row.stats || [],
+      heroImage: row.hero_image,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    });
+  } catch (error) {
+    console.error('Error fetching hero content:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/admin/hero', authenticateAdmin, async (req, res) => {
+  try {
+    const { title, subtitle, description, features, stats, heroImage, isActive } = req.body;
+    
+    // Check if hero content exists
+    const existingResult = await pool.query('SELECT id FROM hero_content ORDER BY id DESC LIMIT 1');
+    
+    if (existingResult.rows.length > 0) {
+      // Update existing
+      const result = await pool.query(
+        'UPDATE hero_content SET title = $1, subtitle = $2, description = $3, features = $4, stats = $5, hero_image = $6, is_active = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8 RETURNING *',
+        [title, subtitle, description, JSON.stringify(features), JSON.stringify(stats), heroImage, isActive, existingResult.rows[0].id]
+      );
+      
+      const row = result.rows[0];
+      res.json({
+        id: row.id.toString(),
+        title: row.title,
+        subtitle: row.subtitle,
+        description: row.description,
+        features: row.features || [],
+        stats: row.stats || [],
+        heroImage: row.hero_image,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      });
+    } else {
+      // Create new
+      const result = await pool.query(
+        'INSERT INTO hero_content (title, subtitle, description, features, stats, hero_image, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        [title, subtitle, description, JSON.stringify(features), JSON.stringify(stats), heroImage, isActive]
+      );
+      
+      const row = result.rows[0];
+      res.json({
+        id: row.id.toString(),
+        title: row.title,
+        subtitle: row.subtitle,
+        description: row.description,
+        features: row.features || [],
+        stats: row.stats || [],
+        heroImage: row.hero_image,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      });
+    }
+  } catch (error) {
+    console.error('Error updating hero content:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
