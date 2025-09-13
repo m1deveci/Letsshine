@@ -1,21 +1,51 @@
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const pg = require('pg');
-const multer = require('multer');
-const sharp = require('sharp');
+import express from 'express';
+import path from 'path';
+import cors from 'cors';
+import pg from 'pg';
+import multer from 'multer';
+import sharp from 'sharp';
+import rateLimit from 'express-rate-limit';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3030;
 
-// Database configuration - basitleştirilmiş config
+// Database configuration
 const pool = new pg.Pool({
-  host: 'localhost',
-  port: 5432,
-  database: 'letsshine',
-  user: 'postgres',
-  // password olmadan peer authentication kullanılır
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  database: process.env.DB_NAME || 'letsshine',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || undefined,
+  // Connection pool settings
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // limit each IP to 1000 requests per windowMs (increased from 100)
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // limit each IP to 20 login attempts per windowMs (increased from 5)
+  message: 'Too many login attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
 
 // Security middleware
 app.use((req, res, next) => {
@@ -29,21 +59,34 @@ app.use((req, res, next) => {
 });
 
 // CORS configuration
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
+const corsOrigins = process.env.CORS_ORIGINS 
+  ? process.env.CORS_ORIGINS.split(',')
+  : process.env.NODE_ENV === 'production' 
     ? ['https://letsshine.com.tr', 'https://www.letsshine.com.tr']
-    : ['http://localhost:3000', 'http://localhost:5173'],
+    : ['http://localhost:3000', 'http://localhost:5173'];
+
+app.use(cors({
+  origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Body parsing middleware with limits
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+const maxFileSize = process.env.MAX_FILE_SIZE || '50mb';
+app.use(express.json({ limit: maxFileSize }));
+app.use(express.urlencoded({ extended: true, limit: maxFileSize }));
 
-// Serve static files from React build
-app.use(express.static(path.join(__dirname, 'dist')));
+// Serve static files from React build with proper MIME types
+app.use(express.static(path.join(__dirname, 'dist'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -61,13 +104,15 @@ const storage = multer.diskStorage({
 const upload = multer({ 
   storage: storage,
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB limit
+    fileSize: parseInt(process.env.MAX_FILE_SIZE || '104857600'), // 100MB default
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    // Allowed image types
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'));
+      cb(new Error('Only image files (JPEG, PNG, GIF, WebP) are allowed'));
     }
   }
 });
@@ -84,6 +129,7 @@ app.get('/api/services', async (req, res) => {
       features: row.features || [],
       icon: row.icon,
       slug: row.slug,
+      isActive: row.is_active !== undefined ? row.is_active : true,
       order: row.order_position,
       createdAt: row.created_at,
       updatedAt: row.updated_at
@@ -94,14 +140,54 @@ app.get('/api/services', async (req, res) => {
   }
 });
 
-app.get('/api/services/:slug', async (req, res) => {
+// Get single service by ID or slug
+app.get('/api/services/:id', async (req, res) => {
   try {
-    const { slug } = req.params;
-    const result = await pool.query('SELECT * FROM services WHERE slug = $1', [slug]);
+    const { id } = req.params;
+    
+    // Check if id is numeric (for ID lookup) or string (for slug lookup)
+    if (!/^\d+$/.test(id)) {
+      // If not numeric, treat as slug
+      const result = await pool.query('SELECT * FROM services WHERE slug = $1', [id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Service not found' });
+      }
+      const row = result.rows[0];
+      return res.json({
+        id: row.id.toString(),
+        title: row.title,
+        description: row.description,
+        content: row.content,
+        features: row.features || [],
+        icon: row.icon,
+        slug: row.slug,
+        isActive: row.is_active !== undefined ? row.is_active : true,
+        order: row.order_position,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      });
+    }
+    
+    // If numeric, treat as ID
+    const result = await pool.query('SELECT * FROM services WHERE id = $1', [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Service not found' });
     }
-    res.json(result.rows[0]);
+    
+    const service = result.rows[0];
+    res.json({
+      id: service.id.toString(),
+      title: service.title,
+      description: service.description,
+      content: service.content,
+      features: service.features || [],
+      icon: service.icon,
+      slug: service.slug,
+      isActive: service.is_active !== undefined ? service.is_active : true,
+      order: service.order_position,
+      createdAt: service.created_at,
+      updatedAt: service.updated_at
+    });
   } catch (error) {
     console.error('Error fetching service:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -159,6 +245,12 @@ app.get('/api/settings', async (req, res) => {
         phone: '+90 (XXX) XXX XX XX',
         email: 'info@letsshine.com',
         address: 'İzmir, Türkiye',
+        socialMedia: {
+          linkedin: '',
+          twitter: '',
+          instagram: '',
+          facebook: ''
+        },
         smtp: {
           host: '',
           port: 587,
@@ -178,6 +270,12 @@ app.get('/api/settings', async (req, res) => {
       phone: row.phone,
       email: row.email,
       address: row.address,
+      socialMedia: {
+        linkedin: row.linkedin || '',
+        twitter: row.twitter || '',
+        instagram: row.instagram || '',
+        facebook: row.facebook || ''
+      },
       smtp: {
         host: row.smtp_host || '',
         port: row.smtp_port || 587,
@@ -197,8 +295,8 @@ const authenticateAdmin = (req, res, next) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   
   // Simple token validation - in production use JWT
-  if (token === 'demo-token') {
-    req.user = { id: '1', email: 'admin@letsshine.com', role: 'admin' };
+  if (token === process.env.ADMIN_TOKEN || token === 'demo-token') {
+    req.user = { id: '1', email: process.env.ADMIN_EMAIL || 'admin@letsshine.com', role: 'admin' };
     next();
   } else {
     res.status(401).json({ error: 'Unauthorized' });
@@ -206,21 +304,113 @@ const authenticateAdmin = (req, res, next) => {
 };
 
 // Admin API Routes (basic auth needed)
-app.post('/api/admin/login', async (req, res) => {
+app.post('/api/admin/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     
     // Simple demo auth - in production use proper password hashing
-    if (email === 'admin@letsshine.com' && password === 'admin123') {
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@letsshine.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    
+    if (email === adminEmail && password === adminPassword) {
       res.json({ 
         user: { id: '1', email, role: 'admin' },
-        token: 'demo-token'
+        token: process.env.ADMIN_TOKEN || 'demo-token'
       });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
     }
   } catch (error) {
     console.error('Error during login:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/settings', authenticateAdmin, async (req, res) => {
+  try {
+    const { title, description, logo, favicon, phone, email, address, socialMedia, smtp } = req.body;
+    
+    // Check if settings exist
+    const existingResult = await pool.query('SELECT * FROM site_settings ORDER BY id LIMIT 1');
+    
+    if (existingResult.rows.length === 0) {
+      // Insert new settings
+      const result = await pool.query(
+        `INSERT INTO site_settings (title, description, logo, favicon, phone, email, address, linkedin, twitter, instagram, facebook, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
+        [
+          title, description, logo, favicon, phone, email, address,
+          socialMedia?.linkedin || '', socialMedia?.twitter || '', socialMedia?.instagram || '', socialMedia?.facebook || '',
+          smtp?.host || '', smtp?.port || 587, smtp?.username || '', smtp?.password || '', smtp?.fromEmail || email
+        ]
+      );
+      
+      const row = result.rows[0];
+      res.json({
+        title: row.title,
+        description: row.description,
+        logo: row.logo,
+        favicon: row.favicon,
+        phone: row.phone,
+        email: row.email,
+        address: row.address,
+        socialMedia: {
+          linkedin: row.linkedin || '',
+          twitter: row.twitter || '',
+          instagram: row.instagram || '',
+          facebook: row.facebook || ''
+        },
+        smtp: {
+          host: row.smtp_host || '',
+          port: row.smtp_port || 587,
+          username: row.smtp_username || '',
+          password: row.smtp_password || '',
+          fromEmail: row.smtp_from_email || 'info@letsshine.com'
+        }
+      });
+    } else {
+      // Update existing settings
+      const result = await pool.query(
+        `UPDATE site_settings SET 
+         title = $1, description = $2, logo = $3, favicon = $4, phone = $5, email = $6, address = $7,
+         linkedin = $8, twitter = $9, instagram = $10, facebook = $11,
+         smtp_host = $12, smtp_port = $13, smtp_username = $14, smtp_password = $15, smtp_from_email = $16,
+         updated_at = NOW()
+         WHERE id = $17 RETURNING *`,
+        [
+          title, description, logo, favicon, phone, email, address,
+          socialMedia?.linkedin || '', socialMedia?.twitter || '', socialMedia?.instagram || '', socialMedia?.facebook || '',
+          smtp?.host || '', smtp?.port || 587, smtp?.username || '', smtp?.password || '', smtp?.fromEmail || email,
+          existingResult.rows[0].id
+        ]
+      );
+      
+      const row = result.rows[0];
+      res.json({
+        title: row.title,
+        description: row.description,
+        logo: row.logo,
+        favicon: row.favicon,
+        phone: row.phone,
+        email: row.email,
+        address: row.address,
+        socialMedia: {
+          linkedin: row.linkedin || '',
+          twitter: row.twitter || '',
+          instagram: row.instagram || '',
+          facebook: row.facebook || ''
+        },
+        smtp: {
+          host: row.smtp_host || '',
+          port: row.smtp_port || 587,
+          username: row.smtp_username || '',
+          password: row.smtp_password || '',
+          fromEmail: row.smtp_from_email || 'info@letsshine.com'
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error updating settings:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -246,6 +436,7 @@ app.get('/api/admin/services', authenticateAdmin, async (req, res) => {
       features: row.features || [],
       icon: row.icon,
       slug: row.slug,
+      isActive: row.is_active !== undefined ? row.is_active : true,
       order: row.order_position,
       createdAt: row.created_at,
       updatedAt: row.updated_at
@@ -259,11 +450,11 @@ app.get('/api/admin/services', authenticateAdmin, async (req, res) => {
 // Services CRUD endpoints
 app.post('/api/services', async (req, res) => {
   try {
-    const { title, description, content, features, icon, slug, order } = req.body;
+    const { title, description, content, features, icon, slug, order, isActive } = req.body;
     
     const result = await pool.query(
-      'INSERT INTO services (title, description, content, features, icon, slug, order_position) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [title, description, content, features || [], icon, slug, order || 0]
+      'INSERT INTO services (title, description, content, features, icon, slug, order_position, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [title, description, content, features || [], icon, slug, order || 0, isActive !== undefined ? isActive : true]
     );
     
     const service = result.rows[0];
@@ -275,24 +466,31 @@ app.post('/api/services', async (req, res) => {
       features: service.features || [],
       icon: service.icon,
       slug: service.slug,
+      isActive: service.is_active,
       order: service.order_position,
       createdAt: service.created_at,
       updatedAt: service.updated_at
     });
   } catch (error) {
     console.error('Error creating service:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error.code === '23505') { // Unique constraint violation
+      res.status(400).json({ error: 'Bu slug zaten kullanılıyor' });
+    } else if (error.code === '23502') { // Not null violation
+      res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 
 app.put('/api/services/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, content, features, icon, slug, order } = req.body;
+    const { title, description, content, features, icon, slug, order, isActive } = req.body;
     
     const result = await pool.query(
-      'UPDATE services SET title = $1, description = $2, content = $3, features = $4, icon = $5, slug = $6, order_position = $7, updated_at = NOW() WHERE id = $8 RETURNING *',
-      [title, description, content, features || [], icon, slug, order || 0, id]
+      'UPDATE services SET title = $1, description = $2, content = $3, features = $4, icon = $5, slug = $6, order_position = $7, is_active = $8, updated_at = NOW() WHERE id = $9 RETURNING *',
+      [title, description, content, features || [], icon, slug, order || 0, isActive !== undefined ? isActive : true, id]
     );
     
     if (result.rows.length === 0) {
@@ -308,13 +506,20 @@ app.put('/api/services/:id', async (req, res) => {
       features: service.features || [],
       icon: service.icon,
       slug: service.slug,
+      isActive: service.is_active,
       order: service.order_position,
       createdAt: service.created_at,
       updatedAt: service.updated_at
     });
   } catch (error) {
     console.error('Error updating service:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error.code === '23505') { // Unique constraint violation
+      res.status(400).json({ error: 'Bu slug zaten kullanılıyor' });
+    } else if (error.code === '23502') { // Not null violation
+      res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 
@@ -500,7 +705,11 @@ app.get('/api/applications', async (req, res) => {
 // Team Members API Routes
 app.get('/api/team', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM team_members WHERE is_active = true ORDER BY order_position');
+    const result = await pool.query(`
+      SELECT * FROM team_members 
+      WHERE is_active = true 
+      ORDER BY role DESC, order_index ASC, name ASC
+    `);
     res.json(result.rows.map(row => ({
       id: row.id.toString(),
       name: row.name,
@@ -509,7 +718,9 @@ app.get('/api/team', async (req, res) => {
       email: row.email,
       linkedin: row.linkedin,
       image: row.image,
-      order: row.order_position,
+      role: row.role || 'consultant',
+      parentId: row.parent_id,
+      orderIndex: row.order_index || 0,
       isActive: row.is_active,
       expertise: row.expertise || [],
       createdAt: row.created_at,
@@ -524,11 +735,11 @@ app.get('/api/team', async (req, res) => {
 // Public Team CRUD endpoints
 app.post('/api/team', async (req, res) => {
   try {
-    const { name, title, bio, email, linkedin, image, order, isActive, expertise } = req.body;
+    const { name, title, bio, email, linkedin, image, role, parentId, orderIndex, isActive, expertise } = req.body;
     
     const result = await pool.query(
-      'INSERT INTO team_members (name, title, bio, email, linkedin, image, order_position, is_active, expertise) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-      [name, title, bio, email, linkedin, image, order || 0, isActive !== undefined ? isActive : true, expertise || []]
+      'INSERT INTO team_members (name, title, bio, email, linkedin, image, role, parent_id, order_index, is_active, expertise) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [name, title, bio, email, linkedin, image, role || 'consultant', parentId, orderIndex || 0, isActive !== undefined ? isActive : true, expertise || []]
     );
     
     const member = result.rows[0];
@@ -540,7 +751,9 @@ app.post('/api/team', async (req, res) => {
       email: member.email,
       linkedin: member.linkedin,
       image: member.image,
-      order: member.order_position,
+      role: member.role || 'consultant',
+      parentId: member.parent_id,
+      orderIndex: member.order_index || 0,
       isActive: member.is_active,
       expertise: member.expertise || [],
       createdAt: member.created_at,
@@ -548,18 +761,22 @@ app.post('/api/team', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating team member:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error.code === '23502') { // Not null violation
+      res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 
 app.put('/api/team/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, title, bio, email, linkedin, image, order, isActive, expertise } = req.body;
+    const { name, title, bio, email, linkedin, image, role, parentId, orderIndex, isActive, expertise } = req.body;
     
     const result = await pool.query(
-      'UPDATE team_members SET name = $1, title = $2, bio = $3, email = $4, linkedin = $5, image = $6, order_position = $7, is_active = $8, expertise = $9, updated_at = NOW() WHERE id = $10 RETURNING *',
-      [name, title, bio, email, linkedin, image, order || 0, isActive !== undefined ? isActive : true, expertise || [], id]
+      'UPDATE team_members SET name = $1, title = $2, bio = $3, email = $4, linkedin = $5, image = $6, role = $7, parent_id = $8, order_index = $9, is_active = $10, expertise = $11, updated_at = NOW() WHERE id = $12 RETURNING *',
+      [name, title, bio, email, linkedin, image, role || 'consultant', parentId, orderIndex || 0, isActive !== undefined ? isActive : true, expertise || [], id]
     );
     
     if (result.rows.length === 0) {
@@ -575,7 +792,9 @@ app.put('/api/team/:id', async (req, res) => {
       email: member.email,
       linkedin: member.linkedin,
       image: member.image,
-      order: member.order_position,
+      role: member.role || 'consultant',
+      parentId: member.parent_id,
+      orderIndex: member.order_index || 0,
       isActive: member.is_active,
       expertise: member.expertise || [],
       createdAt: member.created_at,
@@ -583,7 +802,11 @@ app.put('/api/team/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating team member:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error.code === '23502') { // Not null violation
+      res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 
@@ -606,7 +829,10 @@ app.delete('/api/team/:id', async (req, res) => {
 
 app.get('/api/admin/team', authenticateAdmin, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM team_members ORDER BY order_position');
+    const result = await pool.query(`
+      SELECT * FROM team_members 
+      ORDER BY role DESC, order_index ASC, name ASC
+    `);
     res.json(result.rows.map(row => ({
       id: row.id.toString(),
       name: row.name,
@@ -615,7 +841,9 @@ app.get('/api/admin/team', authenticateAdmin, async (req, res) => {
       email: row.email,
       linkedin: row.linkedin,
       image: row.image,
-      order: row.order_position,
+      role: row.role || 'consultant',
+      parentId: row.parent_id,
+      orderIndex: row.order_index || 0,
       isActive: row.is_active,
       expertise: row.expertise || [],
       createdAt: row.created_at,
@@ -629,11 +857,11 @@ app.get('/api/admin/team', authenticateAdmin, async (req, res) => {
 
 app.post('/api/admin/team', authenticateAdmin, async (req, res) => {
   try {
-    const { name, title, bio, email, linkedin, image, order, isActive, expertise } = req.body;
+    const { name, title, bio, email, linkedin, image, role, parentId, orderIndex, isActive, expertise } = req.body;
     
     const result = await pool.query(
-      'INSERT INTO team_members (name, title, bio, email, linkedin, image, order_position, is_active, expertise) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-      [name, title, bio, email, linkedin, image, order, isActive, expertise]
+      'INSERT INTO team_members (name, title, bio, email, linkedin, image, role, parent_id, order_index, is_active, expertise) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [name, title, bio, email, linkedin, image, role || 'consultant', parentId, orderIndex || 0, isActive, expertise]
     );
     
     const row = result.rows[0];
@@ -645,7 +873,9 @@ app.post('/api/admin/team', authenticateAdmin, async (req, res) => {
       email: row.email,
       linkedin: row.linkedin,
       image: row.image,
-      order: row.order_position,
+      role: row.role || 'consultant',
+      parentId: row.parent_id,
+      orderIndex: row.order_index || 0,
       isActive: row.is_active,
       expertise: row.expertise || [],
       createdAt: row.created_at,
@@ -653,18 +883,22 @@ app.post('/api/admin/team', authenticateAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating team member:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error.code === '23502') { // Not null violation
+      res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 
 app.put('/api/admin/team/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, title, bio, email, linkedin, image, order, isActive, expertise } = req.body;
+    const { name, title, bio, email, linkedin, image, role, parentId, orderIndex, isActive, expertise } = req.body;
     
     const result = await pool.query(
-      'UPDATE team_members SET name = $1, title = $2, bio = $3, email = $4, linkedin = $5, image = $6, order_position = $7, is_active = $8, expertise = $9, updated_at = CURRENT_TIMESTAMP WHERE id = $10 RETURNING *',
-      [name, title, bio, email, linkedin, image, order, isActive, expertise, id]
+      'UPDATE team_members SET name = $1, title = $2, bio = $3, email = $4, linkedin = $5, image = $6, role = $7, parent_id = $8, order_index = $9, is_active = $10, expertise = $11, updated_at = CURRENT_TIMESTAMP WHERE id = $12 RETURNING *',
+      [name, title, bio, email, linkedin, image, role || 'consultant', parentId, orderIndex || 0, isActive, expertise, id]
     );
     
     if (result.rows.length === 0) {
@@ -680,7 +914,9 @@ app.put('/api/admin/team/:id', authenticateAdmin, async (req, res) => {
       email: row.email,
       linkedin: row.linkedin,
       image: row.image,
-      order: row.order_position,
+      role: row.role || 'consultant',
+      parentId: row.parent_id,
+      orderIndex: row.order_index || 0,
       isActive: row.is_active,
       expertise: row.expertise || [],
       createdAt: row.created_at,
@@ -688,7 +924,11 @@ app.put('/api/admin/team/:id', authenticateAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating team member:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error.code === '23502') { // Not null violation
+      res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 
@@ -729,7 +969,6 @@ app.post('/api/admin/upload', authenticateAdmin, upload.single('image'), async (
       .toFile(resizedPath);
     
     // Delete original file
-    const fs = require('fs');
     fs.unlinkSync(originalPath);
     
     // Update filename to resized version
@@ -750,11 +989,6 @@ app.post('/api/admin/upload', authenticateAdmin, upload.single('image'), async (
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// Serve React app for all non-API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // Error handling middleware

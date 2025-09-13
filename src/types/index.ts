@@ -32,10 +32,13 @@ export interface SiteSettings {
   phone: string;
   email: string;
   address: string;
+  contactEmail?: string;
+  contactPhone?: string;
   socialMedia: {
     linkedin?: string;
     twitter?: string;
     instagram?: string;
+    facebook?: string;
   };
   smtp: {
     host: string;
@@ -81,9 +84,36 @@ export interface TeamMember {
   email?: string;
   linkedin?: string;
   image?: string;
-  order: number;
+  role: 'founder' | 'consultant';
+  parentId?: number;
+  orderIndex: number;
   isActive: boolean;
   expertise: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface HeroContent {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  features: string[];
+  stats: {
+    number: string;
+    label: string;
+  }[];
+  heroImage?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface NavigationItem {
+  id: string;
+  name: string;
+  href: string;
+  order: number;
+  isActive: boolean;
+  isExternal?: boolean;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Save, Plus, Edit, Trash2, Image, Type, Layout, Eye, EyeOff } from 'lucide-react';
+import { Save, Plus, Edit, Trash2, Layout, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/ui/Card';
@@ -9,10 +9,17 @@ import Input from '../../components/ui/Input';
 import Swal from 'sweetalert2';
 
 const AboutManagement: React.FC = () => {
-  const { aboutContent, updateAboutContent, addAboutSection, updateAboutSection, deleteAboutSection } = useApp();
+  const { aboutContent, updateAboutContent, addAboutContent, addAboutSection, updateAboutSection, deleteAboutSection } = useApp();
   const { token } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [editingSectionData, setEditingSectionData] = useState({
+    title: '',
+    content: '',
+    type: 'text' as 'text' | 'image-text' | 'text-image' | 'full-image',
+    order: 1,
+    image: ''
+  });
   const [newSection, setNewSection] = useState({
     title: '',
     content: '',
@@ -22,17 +29,39 @@ const AboutManagement: React.FC = () => {
   });
 
   const [aboutForm, setAboutForm] = useState({
-    title: aboutContent?.title || '',
-    subtitle: aboutContent?.subtitle || '',
-    content: aboutContent?.content || '',
+    title: aboutContent?.title || 'Hakkımızda',
+    subtitle: aboutContent?.subtitle || 'İnsan Kaynakları alanında güvenilir çözüm ortağınız',
+    content: aboutContent?.content || '<p>Let\'s Shine olarak, insan kaynakları alanında profesyonel danışmanlık hizmetleri sunuyoruz.</p>',
     heroImage: aboutContent?.heroImage || '',
     isActive: aboutContent?.isActive || true
   });
 
-  const handleSaveAbout = async () => {
-    if (!aboutContent) return;
+  // Update form when aboutContent changes
+  React.useEffect(() => {
+    if (aboutContent) {
+      setAboutForm({
+        title: aboutContent.title,
+        subtitle: aboutContent.subtitle || '',
+        content: aboutContent.content,
+        heroImage: aboutContent.heroImage || '',
+        isActive: aboutContent.isActive
+      });
+    }
+  }, [aboutContent]);
 
+
+  const handleSaveAbout = async () => {
     try {
+      if (!aboutContent) {
+        await Swal.fire({
+          title: 'Hata!',
+          text: 'İçerik bulunamadı.',
+          icon: 'error',
+          confirmButtonText: 'Tamam'
+        });
+        return;
+      }
+
       updateAboutContent({
         ...aboutContent,
         ...aboutForm
@@ -47,6 +76,7 @@ const AboutManagement: React.FC = () => {
         showConfirmButton: false
       });
     } catch (error) {
+      console.error('Error saving about content:', error);
       await Swal.fire({
         title: 'Hata!',
         text: 'İçerik güncellenirken hata oluştu.',
@@ -94,9 +124,20 @@ const AboutManagement: React.FC = () => {
     }
   };
 
-  const handleUpdateSection = async (id: string, data: Partial<typeof newSection>) => {
+  const handleEditSection = (section: any) => {
+    setEditingSection(section.id);
+    setEditingSectionData({
+      title: section.title,
+      content: section.content,
+      type: section.type,
+      order: section.order,
+      image: section.image || ''
+    });
+  };
+
+  const handleUpdateSection = async (id: string) => {
     try {
-      updateAboutSection(id, data);
+      updateAboutSection(id, editingSectionData);
       setEditingSection(null);
       
       await Swal.fire({
@@ -150,15 +191,14 @@ const AboutManagement: React.FC = () => {
     }
   };
 
+  // Show loading if aboutContent is not available yet
   if (!aboutContent) {
     return (
       <div className="p-6">
-        <Card>
-          <div className="p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Hakkımızda İçeriği Bulunamadı</h2>
-            <p className="text-gray-600">Hakkımızda sayfası içeriği mevcut değil.</p>
-          </div>
-        </Card>
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">İçerik yükleniyor...</p>
+        </div>
       </div>
     );
   }
@@ -377,7 +417,7 @@ const AboutManagement: React.FC = () => {
                       <Button
                         variant="outline"
                         size="xs"
-                        onClick={() => setEditingSection(section.id)}
+                        onClick={() => handleEditSection(section)}
                       >
                         <Edit className="w-3 h-3" />
                       </Button>
@@ -391,20 +431,92 @@ const AboutManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <h4 className="font-medium text-gray-900 mb-2">{section.title}</h4>
-                  <div 
-                    className="text-sm text-gray-600 prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: section.content }}
-                  />
+                  {editingSection === section.id ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Başlık</label>
+                          <Input
+                            value={editingSectionData.title}
+                            onChange={(e) => setEditingSectionData(prev => ({ ...prev, title: e.target.value }))}
+                            placeholder="Bölüm başlığı"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Tür</label>
+                          <select
+                            value={editingSectionData.type}
+                            onChange={(e) => setEditingSectionData(prev => ({ ...prev, type: e.target.value as any }))}
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="text">Sadece Metin</option>
+                            <option value="image-text">Resim + Metin</option>
+                            <option value="text-image">Metin + Resim</option>
+                            <option value="full-image">Tam Resim</option>
+                          </select>
+                        </div>
+                      </div>
 
-                  {section.image && (
-                    <div className="mt-3">
-                      <img 
-                        src={section.image} 
-                        alt={section.title}
-                        className="w-24 h-16 object-cover rounded"
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Sıra</label>
+                          <Input
+                            type="number"
+                            value={editingSectionData.order}
+                            onChange={(e) => setEditingSectionData(prev => ({ ...prev, order: parseInt(e.target.value) }))}
+                            min="1"
+                          />
+                        </div>
+                        {editingSectionData.type !== 'text' && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Resim URL</label>
+                            <Input
+                              value={editingSectionData.image}
+                              onChange={(e) => setEditingSectionData(prev => ({ ...prev, image: e.target.value }))}
+                              placeholder="https://example.com/image.jpg"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">İçerik (HTML)</label>
+                        <textarea
+                          value={editingSectionData.content}
+                          onChange={(e) => setEditingSectionData(prev => ({ ...prev, content: e.target.value }))}
+                          placeholder="HTML içerik..."
+                          rows={4}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div className="flex justify-end space-x-2">
+                        <Button variant="outline" onClick={() => setEditingSection(null)}>
+                          İptal
+                        </Button>
+                        <Button leftIcon={<Save />} onClick={() => handleUpdateSection(section.id)}>
+                          Kaydet
+                        </Button>
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      <h4 className="font-medium text-gray-900 mb-2">{section.title}</h4>
+                      <div 
+                        className="text-sm text-gray-600 prose max-w-none"
+                        dangerouslySetInnerHTML={{ __html: section.content }}
+                      />
+
+                      {section.image && (
+                        <div className="mt-3">
+                          <img 
+                            src={section.image} 
+                            alt={section.title}
+                            className="w-24 h-16 object-cover rounded"
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </motion.div>
               ))}

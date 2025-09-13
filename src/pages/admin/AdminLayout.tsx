@@ -9,15 +9,19 @@ import {
   MessageSquare, 
   LogOut,
   Users,
-  FileText
+  FileText,
+  Layout,
+  Navigation
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApp } from '../../contexts/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
 
 const AdminLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
+  const { settings } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -31,6 +35,10 @@ const AdminLayout: React.FC = () => {
     { name: 'Hizmetler', href: '/admin/services', icon: Briefcase },
     { name: 'Ekip', href: '/admin/team', icon: Users },
     { name: 'Başvurular', href: '/admin/applications', icon: MessageSquare },
+    { name: 'Sayfa Yönetimi', href: '/admin/pages', icon: Layout, children: [
+      { name: 'Ana Sayfa', href: '/admin/pages/hero', icon: Home },
+      { name: 'Menü Yönetimi', href: '/admin/pages/navigation', icon: Navigation }
+    ]},
     { name: 'Ayarlar', href: '/admin/settings', icon: Settings }
   ];
 
@@ -91,9 +99,17 @@ const AdminLayout: React.FC = () => {
               {/* Mobile sidebar content */}
               <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center mr-2">
-                    <span className="text-white font-bold text-sm">LS</span>
-                  </div>
+                  {settings.logo ? (
+                    <img 
+                      src={settings.logo} 
+                      alt="Logo" 
+                      className="h-8 w-auto mr-3 object-contain max-w-[100px]"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center mr-2">
+                      <span className="text-white font-bold text-sm">LS</span>
+                    </div>
+                  )}
                   <span className="text-lg font-semibold">Admin Panel</span>
                 </div>
                 <button
@@ -139,9 +155,17 @@ const AdminLayout: React.FC = () => {
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           <div className="flex items-center h-16 px-4 border-b border-gray-200">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center mr-2">
-                <span className="text-white font-bold text-sm">LS</span>
-              </div>
+              {settings.logo ? (
+                <img 
+                  src={settings.logo} 
+                  alt="Logo" 
+                  className="h-8 w-auto mr-3 object-contain max-w-[100px]"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center mr-2">
+                  <span className="text-white font-bold text-sm">LS</span>
+                </div>
+              )}
               <span className="text-lg font-semibold">Admin Panel</span>
             </div>
           </div>
@@ -184,9 +208,17 @@ const AdminLayout: React.FC = () => {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center ml-4">
-            <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-800 rounded flex items-center justify-center mr-2">
-              <span className="text-white font-bold text-xs">LS</span>
-            </div>
+            {settings.logo ? (
+              <img 
+                src={settings.logo} 
+                alt="Logo" 
+                className="h-6 w-auto mr-2 object-contain max-w-[80px]"
+              />
+            ) : (
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-800 rounded flex items-center justify-center mr-2">
+                <span className="text-white font-bold text-xs">LS</span>
+              </div>
+            )}
             <span className="text-sm font-semibold">Admin Panel</span>
           </div>
         </div>

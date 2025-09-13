@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ExternalLink, Users, UserSearch, Target, GraduationCap, Heart, MessageCircle, DollarSign } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
-import { ServiceCard } from '../ui/ServiceCard'
+// import { ServiceCard } from '../ui/ServiceCard'
 
 const iconMap = {
   Users,

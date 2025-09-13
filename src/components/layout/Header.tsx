@@ -9,12 +9,12 @@ const Header: React.FC = () => {
   const location = useLocation();
   const { settings } = useApp();
 
-  const navigation = [
-    { name: 'Ana Sayfa', href: '/' },
-    { name: 'Hakkımızda', href: '/hakkimizda' },
-    { name: 'Hizmetlerimiz', href: '/hizmetler' },
-    { name: 'İletişim', href: '/iletisim' }
-  ];
+  const { navigationItems } = useApp();
+  
+  const navigation = navigationItems
+    .filter(item => item.isActive)
+    .sort((a, b) => a.order - b.order)
+    .map(item => ({ name: item.name, href: item.href }));
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -34,7 +34,7 @@ const Header: React.FC = () => {
                 <img 
                   src={settings.logo} 
                   alt="Logo" 
-                  className="h-10 w-auto mr-3 object-contain"
+                  className="h-8 sm:h-10 w-auto mr-3 object-contain max-w-[120px]"
                 />
               ) : (
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center mr-3">

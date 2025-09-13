@@ -29,58 +29,7 @@ const coachingCategories = [
   { value: 'genc_mentorlugu', label: 'Genç Mentörlüğü' }
 ];
 
-// Coaching service details
-const coachingServiceDetails = [
-  {
-    icon: UserGraduate,
-    title: 'Yeni Mezun Kariyer Koçluğu',
-    description: 'Eğitim hayatını tamamlamış olup iş yaşamına başlangıç yapmak isteyen kişileri kapsar.',
-    details: 'İş hayatına yeni atılan bireylerin ne istediklerini keşfetmelerine, kendilerini en parlak hissedebilecekleri alanlarla ilgili farkındalık geliştirmelerine destek olan kariyer ve mentörlük programıdır. CV hazırlama teknikleri, kişilik envanteri, kariyer portallarını en doğru şekilde kullanım kılavuzluğu, mülakatlarda başarılı olmanın yolları gibi konularda farkındalık geliştiren bir programdır.',
-    sessions: '10 seanstan oluşan bir paketi kapsar. (Takip seanslarından ücret alınmamaktadır.)'
-  },
-  {
-    icon: UserTie,
-    title: 'Uzman Gelişim Koçluğu',
-    description: 'İş hayatında deneyimli profesyonelleri kapsar.',
-    details: 'Mevcut işinde tatmin olmayan, motivasyonu düşen, farklı kariyer yolları arayan deneyimli çalışanlar ile iş yaşamına bir süre ara vermiş uzmanlığı olan kişilere yönelik kariyer ve mentörlük programıdır.',
-    sessions: '10 seanstan oluşan bir paketi kapsar. (Takip seanslarından ücret alınmamaktadır.)'
-  },
-  {
-    icon: Dumbbell,
-    title: 'Sporcu Performans Koçluğu',
-    description: 'Genç sporcuları ve profesyonel olarak spor yapan antrenör ve sporcuları kapsar.',
-    details: 'Sporcuların en yüksek potansiyellerine ulaşmalarını sağlamak amacıyla fiziksel, zihinsel ve duygusal açıdan performans geliştirmeye yönelik çalışmaları kapsayan programdır.',
-    sessions: '8 seans ve 2 takip görüşmesinden oluşan bir paketi kapsar. (2 Takip seanslarından ücret alınmamaktadır.)'
-  },
-  {
-    icon: ChalkboardTeacher,
-    title: 'Emeklilik Sonrası İkinci Kariyer Koçluğu',
-    description: 'Emekli olmuş ve yeniden çalışmak isteyen kişileri kapsar.',
-    details: 'Uzun soluklu iş yaşamı sonrası emekli olmuş ve yeniden iş hayatında yer edinmek isteyen kişilerin ikinci çalışma hayatlarında en motive olacakları işi bulmalarına destek olan koçluk programıdır.',
-    sessions: '8 seans ve 2 takip görüşmesinden oluşan bir paketi kapsar. (2 Takip seanslarından ücret alınmamaktadır.)'
-  },
-  {
-    icon: Users,
-    title: 'Takım Koçluğu',
-    description: 'Kurumsal şirketlerdeki departman çalışanlarını kapsar.',
-    details: 'Şirketlerin çeşitli departmanlarında yer alan takım üyelerinin dayanışma ve ekip ruhunu artırmayı hedefleyen farkındalık geliştirici bir programdır.',
-    sessions: 'Müşteri ihtiyacına göre özelleştirilir.'
-  },
-  {
-    icon: UserCheck,
-    title: 'Yönetici Koçluğu',
-    description: 'Şirketlerin yönetim kadrolarında olan liderleri kapsar.',
-    details: 'Yönetim kadrolarında çalışan profesyonellere yönelik, yetkinlik gelişimini hedefleyen, liderlik kapasitesinin güçlendirilmesini benimseyen bir programdır.',
-    sessions: '8 seans ve 2 takip görüşmesinden oluşan bir paketi kapsar. (2 Takip seanslarından ücret alınmamaktadır.)'
-  },
-  {
-    icon: UserCheck,
-    title: 'Genç Mentörlüğü',
-    description: 'Eğitim hayatı içinde olan bireyleri kapsar.',
-    details: 'Üniversite sınavına hazırlanan gençlerin kişisel, akademik ve kariyer hedeflerine ulaşmalarını sağlayan, gençlerin kendi değerlerinin ve kişilik analizlerinin farkında olmalarını sağlayarak ona göre hedefler koymalarını teşvik eden mentörlük programıdır.',
-    sessions: '8 seans ve 2 takip görüşmesinden oluşan bir paketi kapsar. (Takip seanslarından ücret alınmamaktadır.)'
-  }
-];
+// Coaching service details - removed as not used
 
 const ServiceDetailPage: React.FC = () => {
   const { slug } = useParams();

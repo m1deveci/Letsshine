@@ -29,8 +29,10 @@ const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [faviconPreview, setFaviconPreview] = useState<string>('');
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const { settings, updateSettings } = useApp();
 
@@ -100,6 +102,18 @@ const SettingsPage: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Lütfen geçerli bir resim dosyası seçin.');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Dosya boyutu 2MB\'dan küçük olmalıdır.');
+      return;
+    }
+
     // Create a preview
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -107,7 +121,15 @@ const SettingsPage: React.FC = () => {
       setLogoPreview(result);
       
       // Update settings immediately with the preview URL
-      updateSettings({ logo: result });
+      await updateSettings({ logo: result });
+      
+      // Show success message
+      setSuccessMessage('Logo başarıyla yüklendi! Header ve admin panel sidebar\'da güncellendi.');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setSuccessMessage('');
+      }, 3000);
       
       // Force form to be dirty by updating a field
       setValue('title', settings.title || 'Let\'s Shine', { shouldDirty: true, shouldTouch: true });
@@ -142,7 +164,7 @@ const SettingsPage: React.FC = () => {
       setFaviconPreview(result);
       
       // Update settings immediately with the preview URL
-      updateSettings({ favicon: result });
+      await updateSettings({ favicon: result });
       
       // Update favicon in DOM immediately
       updateFaviconInDOM(result);
@@ -217,7 +239,7 @@ const SettingsPage: React.FC = () => {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-green-800">
-                  Ayarlar başarıyla kaydedildi!
+                  {successMessage || 'Ayarlar başarıyla kaydedildi!'}
                 </p>
               </div>
             </div>
@@ -309,7 +331,32 @@ const SettingsPage: React.FC = () => {
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-gray-900">Site Logosu</h3>
                       
-                      <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                      <div 
+                        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                          isDragOver 
+                            ? 'border-blue-400 bg-blue-50' 
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDragOver(true);
+                        }}
+                        onDragLeave={() => setIsDragOver(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDragOver(false);
+                          const files = e.dataTransfer.files;
+                          if (files.length > 0) {
+                            const file = files[0];
+                            if (file.type.startsWith('image/')) {
+                              const event = {
+                                target: { files: [file] }
+                              } as React.ChangeEvent<HTMLInputElement>;
+                              handleLogoUpload(event);
+                            }
+                          }
+                        }}
+                      >
                         {logoPreview ? (
                           <div className="space-y-4">
                             <img 
@@ -318,11 +365,12 @@ const SettingsPage: React.FC = () => {
                               className="max-h-20 mx-auto object-contain"
                             />
                             <p className="text-sm text-gray-500">Mevcut Logo</p>
+                            <p className="text-xs text-blue-600">Yeni logo yüklemek için tıklayın veya sürükleyin</p>
                           </div>
                         ) : (
                           <div className="space-y-2">
                             <Upload className="w-10 h-10 mx-auto text-gray-400" />
-                            <p className="text-sm text-gray-500">Logo yüklemek için tıklayın</p>
+                            <p className="text-sm text-gray-500">Logo yüklemek için tıklayın veya sürükleyin</p>
                           </div>
                         )}
                         

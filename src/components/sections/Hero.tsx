@@ -3,19 +3,31 @@ import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle, TrendingUp, Users, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
+import { useApp } from '../../contexts/AppContext';
 
 const Hero: React.FC = () => {
-  const features = [
+  const { heroContent } = useApp();
+  
+  // Default values if heroContent is not available
+  const features = heroContent?.features || [
     'Stratejik İnsan Kaynakları Danışmanlığı',
+    'Stratejik Danışmanlık',
     'Koçluk & Mentorluk Hizmetleri',
-    'Psikolojik Danışmanlık ve Destek'
+    'Kurumsal Psikolojik Danışmanlık ve Destek',
+    'Kurumsal Eğitimler'
   ];
 
-  const stats = [
-    { number: '500+', label: 'Başarılı Proje', icon: TrendingUp },
-    { number: '15+', label: 'Yıllık Deneyim', icon: Award },
-    { number: '200+', label: 'Mutlu Müşteri', icon: Users }
+  const stats = heroContent?.stats || [
+    { number: '30+', label: 'Başarılı Proje', icon: TrendingUp },
+    { number: '25+', label: 'Yıllık Deneyim', icon: Award },
+    { number: '210+', label: 'Mutlu Müşteri', icon: Users }
   ];
+
+  const iconMap = {
+    'Başarılı Proje': TrendingUp,
+    'Yıllık Deneyim': Award,
+    'Mutlu Müşteri': Users
+  };
 
   return (
     <section className="relative bg-gradient-to-br from-blue-50 via-white to-blue-50 overflow-hidden">
@@ -35,16 +47,18 @@ const Hero: React.FC = () => {
           >
             <div className="space-y-4">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                İnsan Odaklı{' '}
-                <span className="text-blue-600">İK Çözümleri</span>{' '}
-                ile Geleceği Şekillendirin
+                {heroContent?.title || 'İnsan Odaklı İK Çözümleri ile Geleceği Şekillendirin'}
               </h1>
 
               <p className="text-xl text-gray-600 leading-relaxed">
-                15+ yıllık deneyimimiz ve uzman ekibimizle, organizasyonunuzun insan kaynakları 
-                potansiyelini maksimuma çıkarıyoruz. Stratejik danışmanlık, koçluk ve psikolojik 
-                destek hizmetlerimizle yanınızdayız.
+                {heroContent?.subtitle || '25+ yıllık deneyimimiz ve uzman ekibimizle, organizasyonunuzun insan kaynakları potansiyelini maksimuma çıkarıyoruz.'}
               </p>
+              
+              {heroContent?.description && (
+                <p className="text-lg text-gray-500 leading-relaxed">
+                  {heroContent.description}
+                </p>
+              )}
             </div>
 
             {/* Features */}
@@ -91,9 +105,9 @@ const Hero: React.FC = () => {
           >
             <div className="relative">
               <img
-                src="https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800"
+                src={heroContent?.heroImage || "/uploads/logo1.png"}
                 alt="İnsan Kaynakları Danışmanlığı"
-                className="w-full h-96 lg:h-[500px] object-cover rounded-2xl shadow-2xl"
+                className="w-full h-96 lg:h-[500px] object-contain bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-2xl p-8"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent rounded-2xl"></div>
             </div>
@@ -126,7 +140,7 @@ const Hero: React.FC = () => {
           className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8"
         >
           {stats.map((stat, index) => {
-            const IconComponent = stat.icon;
+            const IconComponent = iconMap[stat.label as keyof typeof iconMap] || TrendingUp;
             return (
               <div
                 key={index}

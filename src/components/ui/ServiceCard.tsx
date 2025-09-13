@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ExternalLink, Users, TrendingUp, Award, BookOpen, Heart, HeartHandshake as Handshake, DollarSign } from 'lucide-react'
+import { ArrowRight, ExternalLink, Users, TrendingUp, BookOpen, Heart, HeartHandshake as Handshake, DollarSign } from 'lucide-react'
 
 interface Service {
   id: string

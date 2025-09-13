@@ -63,7 +63,7 @@ const ServiceApplicationForm: React.FC<ServiceApplicationFormProps> = ({
         throw new Error('Network response was not ok');
       }
 
-      const result = await response.json();
+      await response.json();
       
       // Context'e de ekle (gerçek zamanlı güncelleme için)
       addApplication({
@@ -84,7 +84,8 @@ const ServiceApplicationForm: React.FC<ServiceApplicationFormProps> = ({
     } catch (error) {
       console.error('Form submission error:', error);
       // Hata durumunda kullanıcıya bilgi ver
-      alert('Başvuru gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
+      const errorMessage = error instanceof Error ? error.message : 'Başvuru gönderilirken bir hata oluştu. Lütfen tekrar deneyin.';
+      alert(errorMessage);
     }
   };
 

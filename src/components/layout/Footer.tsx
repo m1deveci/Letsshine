@@ -4,7 +4,7 @@ import { Phone, Mail, MapPin } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 const Footer: React.FC = () => {
-  const { settings, services } = useApp();
+  const { settings } = useApp();
 
   const serviceCategories = [
     'İşe Alım',

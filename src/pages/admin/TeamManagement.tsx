@@ -28,7 +28,9 @@ interface TeamMemberForm {
   email: string;
   linkedin: string;
   image: string;
-  order: number;
+  role: 'founder' | 'consultant';
+  parentId?: number;
+  orderIndex: number;
   isActive: boolean;
   expertise: string[];
 }
@@ -51,7 +53,9 @@ const TeamManagement: React.FC = () => {
     email: '',
     linkedin: '',
     image: '',
-    order: teamMembers.length + 1,
+    role: 'consultant',
+    parentId: undefined,
+    orderIndex: teamMembers.length + 1,
     isActive: true,
     expertise: []
   });
@@ -72,7 +76,9 @@ const TeamManagement: React.FC = () => {
         email: member.email || '',
         linkedin: member.linkedin || '',
         image: member.image || '',
-        order: member.order,
+        role: member.role,
+        parentId: member.parentId,
+        orderIndex: member.orderIndex,
         isActive: member.isActive,
         expertise: [...member.expertise]
       });
@@ -85,7 +91,9 @@ const TeamManagement: React.FC = () => {
         email: '',
         linkedin: '',
         image: '',
-        order: teamMembers.length + 1,
+        role: 'consultant',
+        parentId: undefined,
+        orderIndex: teamMembers.length + 1,
         isActive: true,
         expertise: []
       });
@@ -210,7 +218,7 @@ const TeamManagement: React.FC = () => {
       };
       
       if (editingMember) {
-        updateTeamMember(editingMember.id, memberData);
+        await updateTeamMember(editingMember.id, memberData);
         await Swal.fire({
           title: 'Başarılı!',
           text: 'Ekip üyesi başarıyla güncellendi.',
@@ -219,7 +227,7 @@ const TeamManagement: React.FC = () => {
           showConfirmButton: false
         });
       } else {
-        addTeamMember(memberData);
+        await addTeamMember(memberData);
         await Swal.fire({
           title: 'Başarılı!',
           text: 'Yeni ekip üyesi başarıyla eklendi.',
@@ -232,9 +240,10 @@ const TeamManagement: React.FC = () => {
       handleCloseForm();
     } catch (error) {
       console.error('Error submitting form:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Form gönderilirken hata oluştu.';
       await Swal.fire({
         title: 'Hata!',
-        text: 'Form gönderilirken hata oluştu.',
+        text: errorMessage,
         icon: 'error',
         confirmButtonText: 'Tamam'
       });
@@ -256,7 +265,7 @@ const TeamManagement: React.FC = () => {
 
     if (result.isConfirmed) {
       try {
-        deleteTeamMember(id);
+        await deleteTeamMember(id);
         await Swal.fire({
           title: 'Silindi!',
           text: 'Ekip üyesi başarıyla silindi.',
@@ -265,9 +274,10 @@ const TeamManagement: React.FC = () => {
           showConfirmButton: false
         });
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Ekip üyesi silinirken hata oluştu.';
         await Swal.fire({
           title: 'Hata!',
-          text: 'Ekip üyesi silinirken hata oluştu.',
+          text: errorMessage,
           icon: 'error',
           confirmButtonText: 'Tamam'
         });
@@ -326,6 +336,12 @@ const TeamManagement: React.FC = () => {
                       <Users className="w-12 h-12 text-blue-500" />
                     </div>
                   )}
+                </div>
+                {/* Role Badge */}
+                <div className={`absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                  member.role === 'founder' ? 'bg-yellow-500' : 'bg-blue-500'
+                }`}>
+                  {member.role === 'founder' ? 'K' : 'D'}
                 </div>
               </div>
 
@@ -441,6 +457,53 @@ const TeamManagement: React.FC = () => {
                     value={formData.linkedin}
                     onChange={(e) => setFormData(prev => ({ ...prev, linkedin: e.target.value }))}
                     placeholder="https://linkedin.com/in/..."
+                  />
+
+                  {/* Role Selection */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Rol
+                    </label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'founder' | 'consultant' }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="consultant">Danışman</option>
+                      <option value="founder">Kurucu Ortak</option>
+                    </select>
+                  </div>
+
+                  {/* Parent Selection (for consultants) */}
+                  {formData.role === 'consultant' && (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Üst Danışman (Opsiyonel)
+                      </label>
+                      <select
+                        value={formData.parentId || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, parentId: e.target.value ? parseInt(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Üst danışman seçin</option>
+                        {teamMembers
+                          .filter(member => member.role === 'founder')
+                          .map(member => (
+                            <option key={member.id} value={member.id}>
+                              {member.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Order Index */}
+                  <Input
+                    label="Sıralama"
+                    type="number"
+                    value={formData.orderIndex}
+                    onChange={(e) => setFormData(prev => ({ ...prev, orderIndex: parseInt(e.target.value) || 0 }))}
+                    min="0"
                   />
                 </div>
 

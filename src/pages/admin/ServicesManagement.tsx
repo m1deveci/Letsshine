@@ -56,7 +56,7 @@ const ServicesManagement: React.FC = () => {
 
     if (result.isConfirmed) {
       try {
-        deleteService(serviceId);
+        await deleteService(serviceId);
         await Swal.fire({
           title: 'Silindi!',
           text: 'Hizmet başarıyla silindi.',
@@ -65,9 +65,10 @@ const ServicesManagement: React.FC = () => {
           showConfirmButton: false
         });
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Hizmet silinirken hata oluştu.';
         await Swal.fire({
           title: 'Hata!',
-          text: 'Hizmet silinirken hata oluştu.',
+          text: errorMessage,
           icon: 'error',
           confirmButtonText: 'Tamam'
         });
@@ -78,7 +79,7 @@ const ServicesManagement: React.FC = () => {
   const handleSave = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> | Service) => {
     try {
       if (editingService) {
-        updateService(editingService.id, serviceData);
+        await updateService(editingService.id, serviceData);
         await Swal.fire({
           title: 'Başarılı!',
           text: 'Hizmet başarıyla güncellendi.',
@@ -87,7 +88,7 @@ const ServicesManagement: React.FC = () => {
           showConfirmButton: false
         });
       } else {
-        addService(serviceData);
+        await addService(serviceData);
         await Swal.fire({
           title: 'Başarılı!',
           text: 'Yeni hizmet başarıyla eklendi.',
@@ -99,9 +100,10 @@ const ServicesManagement: React.FC = () => {
       setIsModalOpen(false);
       setEditingService(null);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Hizmet kaydedilirken hata oluştu.';
       await Swal.fire({
         title: 'Hata!',
-        text: 'Hizmet kaydedilirken hata oluştu.',
+        text: errorMessage,
         icon: 'error',
         confirmButtonText: 'Tamam'
       });
