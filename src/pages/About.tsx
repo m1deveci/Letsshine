@@ -1,21 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useApp } from '../contexts/AppContext';
+import { Heart, Target, Eye, Star, Users, Lightbulb, Shield, Zap, Award, Globe } from 'lucide-react';
 
 const About: React.FC = () => {
-  const { aboutContent } = useApp();
-
-  if (!aboutContent) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">İçerik Bulunamadı</h1>
-          <p className="text-gray-600">Hakkımızda sayfası içeriği mevcut değil.</p>
-        </div>
-      </div>
-    );
-  }
-
   const containerVariants = {
     hidden: {},
     visible: {
@@ -37,11 +24,11 @@ const About: React.FC = () => {
     }
   };
 
-  const imageVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
+  const cardVariants = {
+    hidden: { opacity: 0, y: 30 },
     visible: { 
       opacity: 1, 
-      scale: 1,
+      y: 0,
       transition: {
         duration: 0.6,
         ease: "easeOut"
@@ -49,50 +36,50 @@ const About: React.FC = () => {
     }
   };
 
-  const renderSection = (section: typeof aboutContent.sections[0], index: number) => {
-    const isEven = index % 2 === 0;
-    
-    return (
-      <motion.div
-        key={section.id}
-        variants={sectionVariants}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20"
-      >
-        {/* Text Content */}
-        <motion.div 
-          className={`${isEven ? '' : 'lg:order-2'}`}
-          initial={{ opacity: 0, x: isEven ? -50 : 50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
-            {section.title}
-          </h3>
-          <div className="text-gray-600 leading-relaxed prose max-w-none">
-            {section.content}
-          </div>
-        </motion.div>
-        
-        {/* Image */}
-        {section.image && (
-          <motion.div
-            variants={imageVariants}
-            className={`${isEven ? '' : 'lg:order-1'}`}
-          >
-            <div className="relative overflow-hidden rounded-2xl shadow-2xl group">
-              <img 
-                src={section.image}
-                alt={section.title}
-                className="w-full h-96 object-cover transform group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            </div>
-          </motion.div>
-        )}
-      </motion.div>
-    );
-  };
+  const values = [
+    {
+      icon: Heart,
+      title: "Samimiyet",
+      description: "İnsanlara kalpten yaklaşır, her ilişkimizi içtenlikle kurarız."
+    },
+    {
+      icon: Shield,
+      title: "Güven",
+      description: "Bize emanet edilen her yolculuğun sorumluluğunu taşıyarak güven inşa ederiz."
+    },
+    {
+      icon: Zap,
+      title: "Çeviklik",
+      description: "Hayatın hızlı değişimine uyum sağlarken, en uygun çözümleri vakit kaybetmeden üretiriz."
+    },
+    {
+      icon: Users,
+      title: "İnsana Değer",
+      description: "İnsanların gerçek ihtiyaçlarını duyar, onların potansiyellerine ışık tutarız."
+    },
+    {
+      icon: Lightbulb,
+      title: "İlham Verme",
+      description: "Her temasımızda gelişime, dönüşüme ve umuda vesile olmayı hedefleriz."
+    },
+    {
+      icon: Globe,
+      title: "Sürdürülebilir Gelişim",
+      description: "Bugünü dönüştürürken, geleceğe kalıcı bir değer bırakırız."
+    }
+  ];
+
+  const slogans = [
+    "İnsana dokun, geleceği dönüştür.",
+    "Her yolculuk bir keşif, biz yanınızdayız.",
+    "Güvenle, samimiyetle, birlikte büyüyoruz.",
+    "Hızlı düşün, doğru çöz, birlikte kazan.",
+    "Çevik adımlar, kalıcı sonuçlar.",
+    "Her ihtiyaç için en doğru çözüm, en kısa yoldan.",
+    "İnsanı anlayarak, potansiyeli ortaya çıkarıyoruz.",
+    "Kurumlara güç, bireylere ilham katıyoruz.",
+    "Samimiyetle gelişim, güvenle dönüşüm."
+  ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -119,42 +106,150 @@ const About: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              {aboutContent.title}
+              Hakkımızda
             </h1>
-            {aboutContent.subtitle && (
-              <p className="text-xl sm:text-2xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
-                {aboutContent.subtitle}
-              </p>
-            )}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="prose prose-lg mx-auto text-gray-600"
-            >
-              {aboutContent.description}
-            </motion.div>
+            <p className="text-xl sm:text-2xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
+              İnsanın içindeki potansiyele inanıyoruz. Dinliyor, anlıyor ve ilhamla dönüştürüyoruz.
+            </p>
           </motion.div>
-
         </div>
       </motion.section>
 
-      {/* Content Sections */}
-      {aboutContent.sections.length > 0 && (
-        <motion.section 
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="py-20 bg-white"
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {aboutContent.sections
-              .sort((a, b) => a.order - b.order)
-              .map((section, index) => renderSection(section, index))}
+      {/* Manifesto Section */}
+      <motion.section 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        className="py-20 bg-white"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div variants={sectionVariants} className="text-center mb-16">
+            <div className="flex items-center justify-center mb-6">
+              <Star className="w-12 h-12 text-yellow-500 mr-4" />
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Manifestosumuz</h2>
+            </div>
+            <div className="max-w-4xl mx-auto">
+              <p className="text-lg text-gray-600 leading-relaxed mb-6">
+                Biz, insanın içindeki potansiyelin farkındayız. Her bireyin ve her kurumun, doğru anlaşıldığında ortaya çıkabilecek bir ışığı olduğuna inanıyoruz.
+              </p>
+              <p className="text-lg text-gray-600 leading-relaxed mb-6">
+                Görevimiz, o ışığı bulmak ve parlamasına destek olmak. Bazen yön göstererek, bazen yalnızca yanında yürüyerek… Ama her zaman samimiyetle, güvenle ve ilhamla.
+              </p>
+              <p className="text-lg text-gray-600 leading-relaxed mb-6">
+                Bizim için başarı; rakamlarla değil, dokunduğumuz hayatların dönüşümüyle ölçülür. Çünkü biliyoruz ki gelişen bir insan, değişen bir kurum; gelişen bir kurum, dönüşen bir dünya demektir.
+              </p>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Biz buradayız. Dinlemek, anlamak, güçlendirmek ve ilham vermek için. Çünkü biz, birlikte daha iyisini inşa edebileceğimize inanıyoruz.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* Mission, Vision Section */}
+      <motion.section 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        className="py-20 bg-gray-50"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Mission */}
+            <motion.div variants={sectionVariants} className="bg-white p-8 rounded-2xl shadow-lg">
+              <div className="flex items-center mb-6">
+                <Target className="w-10 h-10 text-blue-600 mr-4" />
+                <h3 className="text-2xl font-bold text-gray-900">Misyonumuz</h3>
+              </div>
+              <p className="text-gray-600 leading-relaxed">
+                İnsanı en değerli kaynak olarak görerek, bireylerin ve kurumların içsel potansiyellerini keşfetmelerine eşlik etmek. Onları gerçekten duyarak, ihtiyaçlarını anlayarak ve doğru çözümlerle buluşturarak; güven, samimiyet ve gelişim yolculuklarında rehber olmak.
+              </p>
+            </motion.div>
+
+            {/* Vision */}
+            <motion.div variants={sectionVariants} className="bg-white p-8 rounded-2xl shadow-lg">
+              <div className="flex items-center mb-6">
+                <Eye className="w-10 h-10 text-green-600 mr-4" />
+                <h3 className="text-2xl font-bold text-gray-900">Vizyonumuz</h3>
+              </div>
+              <p className="text-gray-600 leading-relaxed">
+                Her bireyin ve kurumun içindeki gücü ortaya çıkararak; daha mutlu, daha üretken ve daha anlamlı bir dünya inşa etmeye katkı sağlamak.
+              </p>
+            </motion.div>
           </div>
-        </motion.section>
-      )}
+        </div>
+      </motion.section>
+
+      {/* Values Section */}
+      <motion.section 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        className="py-20 bg-white"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div variants={sectionVariants} className="text-center mb-16">
+            <div className="flex items-center justify-center mb-6">
+              <Award className="w-12 h-12 text-purple-600 mr-4" />
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Değerlerimiz</h2>
+            </div>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Çalışma prensiplerimizi ve değerlerimizi oluşturan temel ilkeler
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {values.map((value, index) => (
+              <motion.div
+                key={index}
+                variants={cardVariants}
+                className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100"
+              >
+                <div className="flex items-center mb-4">
+                  <div className="p-3 bg-blue-100 rounded-lg mr-4">
+                    <value.icon className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900">{value.title}</h3>
+                </div>
+                <p className="text-gray-600 leading-relaxed">{value.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Slogans Section */}
+      <motion.section 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 text-white"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div variants={sectionVariants} className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6">İlham Verici Sözlerimiz</h2>
+            <p className="text-xl opacity-90 max-w-3xl mx-auto">
+              Çalışma felsefemizi yansıtan ve bizi motive eden sözler
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {slogans.map((slogan, index) => (
+              <motion.div
+                key={index}
+                variants={cardVariants}
+                className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20 hover:bg-white/20 transition-colors duration-300"
+              >
+                <p className="text-lg font-medium text-center">{slogan}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
 
       {/* CTA Section */}
       <motion.section
@@ -162,7 +257,7 @@ const About: React.FC = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
-        className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 text-white"
+        className="py-20 bg-gray-50"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
@@ -171,10 +266,10 @@ const About: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
               Bizimle Çalışmaya Başlayın
             </h2>
-            <p className="text-xl mb-8 opacity-90 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               İnsan kaynakları çözümleriniz için profesyonel desteğe mi ihtiyacınız var? 
               Hemen iletişime geçin ve size nasıl yardımcı olabileceğimizi öğrenin.
             </p>
@@ -182,7 +277,7 @@ const About: React.FC = () => {
               href="/iletisim"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors duration-300 shadow-lg"
+              className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors duration-300 shadow-lg"
             >
               İletişime Geçin
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

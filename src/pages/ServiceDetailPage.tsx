@@ -25,6 +25,72 @@ const iconMap = {
   UserCheck
 };
 
+// Psychological counseling service categories with tooltips
+const psychologicalCategories: ServiceCategory[] = [
+  { 
+    id: '1',
+    value: 'bireysel', 
+    name: 'Bireysel Psikolojik Danışmanlık',
+    description: 'Duygusal zorluklar, kaygı, depresyon, stres, yas, ilişkisel zorluklar ve yaşam geçişleri üzerine çalışılır.',
+    icon: 'Heart',
+    tooltip: `
+      <strong>Bireysel Psikolojik Danışmanlık</strong><br>
+      Duygusal zorluklar, kaygı, depresyon, stres, yas, ilişkisel zorluklar ve yaşam geçişleri üzerine çalışılır. 
+      Güçlü yönlerin fark edilmesi, baş etme becerilerinin geliştirilmesi ve iyi oluşun artırılması hedeflenir.<br><br>
+      8–12 seanstan oluşan bir program önerilir. <em>(Takip seanslarından ücret alınmamaktadır.)</em>
+    `
+  },
+  { 
+    id: '2',
+    value: 'ergen', 
+    name: 'Ergen / Genç Danışmanlığı',
+    description: 'Kimlik gelişimi, duygusal regülasyon, akademik motivasyon, akran ilişkileri ve dijital denge konularında destek sunulur.',
+    icon: 'UserGraduate',
+    tooltip: `
+      <strong>Ergen / Genç Danışmanlığı</strong><br>
+      Kimlik gelişimi, duygusal regülasyon, akademik motivasyon, akran ilişkileri ve dijital denge konularında destek sunulur.<br><br>
+      8 seans + 1 takip görüşmesi önerilir. <em>(Takip seansı ücretsizdir.)</em>
+    `
+  },
+  { 
+    id: '3',
+    value: 'kurumsal', 
+    name: 'Kurumsal Psikolojik Danışmanlık',
+    description: 'Çalışan destek programları (EAP), tükenmişlik ve stres yönetimi, iletişim ve ekip içi iş birliğini geliştirmeye yönelik atölyeler.',
+    icon: 'Users',
+    tooltip: `
+      <strong>Kurumsal Psikolojik Danışmanlık</strong><br>
+      Çalışan destek programları (EAP), tükenmişlik ve stres yönetimi, iletişim ve ekip içi iş birliğini geliştirmeye yönelik atölyeler ve bireysel görüşmeler içerir.<br><br>
+      Kuruma özel planlanır; genellikle 6–8 oturum setleriyle ilerlenir.
+    `
+  },
+  { 
+    id: '4',
+    value: 'online', 
+    name: 'Online Danışmanlık',
+    description: 'Güvenli, gizlilik ilkesine uygun çevrimiçi görüşmelerle mekân bağımsız destek.',
+    icon: 'MessageCircle',
+    tooltip: `
+      <strong>Online Danışmanlık</strong><br>
+      Güvenli, gizlilik ilkesine uygun çevrimiçi görüşmelerle mekân bağımsız destek. 
+      Esnek randevu saatleri ve düzenli süreç takibi sağlanır.<br><br>
+      6–10 seanslık plan önerilir. <em>(Takip seanslarından ücret alınmamaktadır.)</em>
+    `
+  },
+  { 
+    id: '5',
+    value: 'sinav', 
+    name: 'Sınav Kaygısı & Performans',
+    description: 'Kaygı ve performans ilişkisi, odaklanma teknikleri, nefes/gevşeme egzersizleri ve sınav rutini oluşturma üzerine çalışılır.',
+    icon: 'Target',
+    tooltip: `
+      <strong>Sınav Kaygısı & Performans</strong><br>
+      Kaygı ve performans ilişkisi, odaklanma teknikleri, nefes/gevşeme egzersizleri ve sınav rutini oluşturma üzerine çalışılır.<br><br>
+      6–8 seans + 1 takip önerilir. <em>(Takip seansı ücretsizdir.)</em>
+    `
+  }
+];
+
 // Coaching service categories with tooltips
 const coachingCategories: ServiceCategory[] = [
   { 
@@ -127,6 +193,7 @@ const ServiceDetailPage: React.FC = () => {
 
   const IconComponent = iconMap[service.icon as keyof typeof iconMap] || Users;
   const isCoachingService = service.slug === 'kocluk';
+  const isPsychologicalService = service.slug === 'psikolojik-danismanlik';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -230,8 +297,53 @@ const ServiceDetailPage: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Service Features - Show for non-coaching services */}
-              {!isCoachingService && service.features && service.features.length > 0 && (
+              {/* Psychological Counseling Service Categories - Only show for psychological service */}
+              {isPsychologicalService && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                >
+                  <Card>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6">Hizmet Alanlarımız</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {psychologicalCategories.map((category, index) => {
+                        const CategoryIcon = iconMap[category.icon as keyof typeof iconMap] || Users;
+                        
+                        return (
+                          <Tooltip
+                            key={category.id}
+                            content={category.tooltip || ''}
+                            trigger="hover"
+                            position="top"
+                            maxWidth={360}
+                          >
+                            <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-300 cursor-pointer group">
+                              <div className="flex items-start">
+                                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 group-hover:bg-blue-600 transition-colors duration-300">
+                                  <CategoryIcon className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors duration-300" />
+                                </div>
+                                <div className="flex-1">
+                                  <h5 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">
+                                    {category.name}
+                                  </h5>
+                                  <p className="text-gray-600 text-sm leading-relaxed">
+                                    {category.description}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </Tooltip>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* Service Features - Show for non-coaching and non-psychological services */}
+              {!isCoachingService && !isPsychologicalService && service.features && service.features.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -263,10 +375,19 @@ const ServiceDetailPage: React.FC = () => {
               >
                 <ServiceApplicationForm 
                   service={service} 
-                  categories={isCoachingService ? coachingCategories.map(cat => ({ 
-                    value: cat.value, 
-                    label: cat.name 
-                  })) : undefined}
+                  categories={
+                    isCoachingService 
+                      ? coachingCategories.map(cat => ({ 
+                          value: cat.value, 
+                          label: cat.name 
+                        }))
+                      : isPsychologicalService
+                        ? psychologicalCategories.map(cat => ({ 
+                            value: cat.value, 
+                            label: cat.name 
+                          }))
+                        : undefined
+                  }
                 />
               </motion.div>
             </div>

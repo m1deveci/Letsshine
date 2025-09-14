@@ -1237,14 +1237,49 @@ app.put('/api/navigation/:id', authenticateAdmin, async (req, res) => {
     const { id } = req.params;
     const { name, href, order_position, is_active } = req.body;
     
-    if (!name || !href) {
-      return res.status(400).json({ error: 'Name and href are required' });
+    // Only validate name and href if they are being updated
+    if (name !== undefined && !name) {
+      return res.status(400).json({ error: 'Name is required when updating' });
+    }
+    if (href !== undefined && !href) {
+      return res.status(400).json({ error: 'Href is required when updating' });
     }
     
-    const result = await pool.query(
-      'UPDATE navigation SET name = $1, href = $2, order_position = $3, is_active = $4, updated_at = NOW() WHERE id = $5 RETURNING *',
-      [name, href, order_position || 0, is_active !== undefined ? is_active : true, id]
-    );
+    // Build dynamic query based on what fields are being updated
+    const updateFields = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (name !== undefined) {
+      updateFields.push(`name = $${paramCount}`);
+      values.push(name);
+      paramCount++;
+    }
+    
+    if (href !== undefined) {
+      updateFields.push(`href = $${paramCount}`);
+      values.push(href);
+      paramCount++;
+    }
+    
+    if (order_position !== undefined) {
+      updateFields.push(`order_position = $${paramCount}`);
+      values.push(order_position);
+      paramCount++;
+    }
+    
+    if (is_active !== undefined) {
+      updateFields.push(`is_active = $${paramCount}`);
+      values.push(is_active);
+      paramCount++;
+    }
+    
+    updateFields.push(`updated_at = NOW()`);
+    values.push(id);
+    
+    const query = `UPDATE navigation SET ${updateFields.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+    
+    const result = await pool.query(query, values);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Navigation item not found' });

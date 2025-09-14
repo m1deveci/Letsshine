@@ -11,6 +11,7 @@ import Footer from './components/layout/Footer';
 
 // Public Pages
 import HomePage from './pages/HomePage';
+import About from './pages/About';
 import TeamPage from './pages/TeamPage';
 import ServicesPage from './pages/ServicesPage';
 import ServiceDetailPage from './pages/ServiceDetailPage';
@@ -55,6 +56,7 @@ function App() {
                     <main className="flex-1">
                       <Routes>
                         <Route path="/" element={<HomePage />} />
+                        <Route path="/about" element={<About />} />
                         <Route path="/ekibimiz" element={<TeamPage />} />
                         <Route path="/hizmetler" element={<ServicesPage />} />
                         <Route path="/hizmet/:slug" element={<ServiceDetailPage />} />
