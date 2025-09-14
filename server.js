@@ -55,6 +55,18 @@ app.use((req, res, next) => {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  
+  // Content Security Policy
+  res.setHeader('Content-Security-Policy', 
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data: blob:; " +
+    "font-src 'self' data:; " +
+    "connect-src 'self' http://localhost:3030 https://letsshine.com.tr; " +
+    "frame-ancestors 'none';"
+  );
+  
   next();
 });
 
@@ -63,7 +75,7 @@ const corsOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',')
   : process.env.NODE_ENV === 'production' 
     ? ['https://letsshine.com.tr', 'https://www.letsshine.com.tr']
-    : ['http://localhost:3000', 'http://localhost:5173'];
+    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'];
 
 app.use(cors({
   origin: corsOrigins,
