@@ -13,9 +13,13 @@ const applicationSchema = z.object({
   name: z.string().min(2, 'İsim en az 2 karakter olmalıdır'),
   email: z.string().email('Geçerli bir e-posta adresi giriniz'),
   phone: z.string()
-    .min(11, 'Telefon numarası 11 haneli olmalıdır')
-    .max(11, 'Telefon numarası 11 haneli olmalıdır')
-    .regex(/^0[1-9]\d{9}$/, 'Geçerli bir Türkiye telefon numarası giriniz (05xxxxxxxxx)'),
+    .min(1, 'Telefon numarası gereklidir')
+    .refine((val) => {
+      // Boşlukları ve özel karakterleri kaldır
+      const cleanPhone = val.replace(/\D/g, '');
+      // 11 haneli olmalı ve 0 ile başlamalı
+      return cleanPhone.length === 11 && cleanPhone.startsWith('0');
+    }, 'Geçerli bir Türkiye telefon numarası giriniz (05xxxxxxxxx)'),
   category: z.string().optional(),
   selectedFeatures: z.array(z.string()).optional(),
   message: z.string().optional()

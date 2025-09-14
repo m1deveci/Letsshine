@@ -22,8 +22,9 @@ import Swal from 'sweetalert2';
 const AdminLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pendingApplicationsCount, setPendingApplicationsCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const { isAuthenticated, logout, token } = useAuth();
-  const { settings } = useApp();
+  const { settings, refreshUnreadMessagesCount: setRefreshFunction } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -46,11 +47,48 @@ const AdminLayout: React.FC = () => {
     }
   };
 
+  // Fetch unread messages count
+  const fetchUnreadMessagesCount = async () => {
+    try {
+      const response = await fetch('/api/admin/messages', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const unreadCount = data.messages.filter((msg: any) => !msg.readStatus).length;
+        setUnreadMessagesCount(unreadCount);
+      }
+    } catch (error) {
+      console.error('Error fetching unread messages count:', error);
+    }
+  };
+
+  // Function to refresh unread count (can be called from child components)
+  const refreshUnreadCount = () => {
+    if (token) {
+      fetchUnreadMessagesCount();
+    }
+  };
+
+  // Set the refresh function in context when component mounts
+  useEffect(() => {
+    if (setRefreshFunction) {
+      setRefreshFunction(refreshUnreadCount);
+    }
+  }, [setRefreshFunction, token]);
+
   useEffect(() => {
     if (isAuthenticated && token) {
       fetchPendingApplicationsCount();
+      fetchUnreadMessagesCount();
       // Refresh every 30 seconds
-      const interval = setInterval(fetchPendingApplicationsCount, 30000);
+      const interval = setInterval(() => {
+        fetchPendingApplicationsCount();
+        fetchUnreadMessagesCount();
+      }, 30000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, token]);
@@ -171,6 +209,11 @@ const AdminLayout: React.FC = () => {
                         {pendingApplicationsCount}
                       </span>
                     )}
+                    {item.name === 'Mesajlar' && unreadMessagesCount > 0 && (
+                      <span className="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                        {unreadMessagesCount}
+                      </span>
+                    )}
                   </Link>
                 ))}
               </nav>
@@ -223,6 +266,11 @@ const AdminLayout: React.FC = () => {
                 {item.name === 'Başvurular' && pendingApplicationsCount > 0 && (
                   <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
                     {pendingApplicationsCount}
+                  </span>
+                )}
+                {item.name === 'Mesajlar' && unreadMessagesCount > 0 && (
+                  <span className="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                    {unreadMessagesCount}
                   </span>
                 )}
               </Link>

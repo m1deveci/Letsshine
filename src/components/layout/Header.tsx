@@ -43,7 +43,7 @@ const Header: React.FC = () => {
               )}
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{settings.title || "Let's Shine"}</h1>
-                <p className="text-xs text-gray-500">İnsan Kaynakları</p>
+                <p className="text-xs text-gray-500">{settings.subtitle || "İnsan Kaynakları"}</p>
               </div>
             </div>
           </Link>

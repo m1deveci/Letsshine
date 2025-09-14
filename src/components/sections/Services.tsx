@@ -140,33 +140,6 @@ const Services: React.FC = () => {
           })}
         </motion.div>
 
-        {/* Professional CTA Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-center"
-        >
-          <div className="bg-slate-800 rounded-3xl p-12 text-center">
-            <h3 className="text-3xl font-bold text-white mb-4 font-serif">
-              Tüm Çözümlerimizi Keşfedin
-            </h3>
-            <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto">
-              Detaylı hizmet portföyümüz ve uzman ekibimizle tanışın.
-              İşletmeniz için en uygun çözümü birlikte bulalım.
-            </p>
-
-            <Link to="/hizmetler" className="group">
-              <div className="inline-flex items-center gap-4 bg-white text-slate-800 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-100 transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                <span>Hizmet Portföyümüzü İnceleyin</span>
-                <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center group-hover:bg-slate-200 transition-colors">
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

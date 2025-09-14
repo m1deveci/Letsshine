@@ -47,6 +47,7 @@ export interface Application {
 
 export interface SiteSettings {
   title: string;
+  subtitle?: string;
   description: string;
   logo?: string;
   favicon?: string;

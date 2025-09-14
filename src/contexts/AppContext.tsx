@@ -21,6 +21,7 @@ interface AppContextType {
   addNavigationItem: (item: Omit<NavigationItem, 'id'>) => void;
   updateNavigationItem: (id: string, item: Partial<NavigationItem>) => void;
   deleteNavigationItem: (id: string) => void;
+  refreshUnreadMessagesCount?: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -153,6 +154,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [settings, setSettings] = useState<SiteSettings>({
     title: "Let's Shine",
+    subtitle: 'İnsan Kaynakları',
     description: 'İnsan Kaynakları Danışmanlığı',
     logo: '',
     favicon: '',
@@ -252,6 +254,28 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     fetchTeamMembers();
     fetchHeroContent();
   }, []);
+
+  // Favicon'u güncelle
+  useEffect(() => {
+    if (settings.favicon) {
+      // Mevcut favicon linklerini kaldır
+      const existingLinks = document.querySelectorAll("link[rel*='icon']");
+      existingLinks.forEach(link => link.remove());
+      
+      // Yeni favicon link'i oluştur
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/x-icon';
+      link.href = settings.favicon;
+      document.getElementsByTagName('head')[0].appendChild(link);
+      
+      // Apple touch icon için de ekle
+      const appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      appleLink.href = settings.favicon;
+      document.getElementsByTagName('head')[0].appendChild(appleLink);
+    }
+  }, [settings.favicon]);
 
   const addService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -354,12 +378,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // Update local state immediately for UI responsiveness
       setSettings(prev => ({ ...prev, ...newSettings }));
       
+      // Get token from sessionStorage
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+      
       // Save to backend
       const response = await fetch('/api/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify(newSettings)
       });
@@ -519,6 +546,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setNavigationItems(prev => prev.filter(item => item.id !== id));
   };
 
+  // Function to refresh unread messages count (will be set by AdminLayout)
+  const [refreshUnreadMessagesCount, setRefreshUnreadMessagesCount] = useState<(() => void) | undefined>(undefined);
+
   const value = {
     services,
     applications,
@@ -538,7 +568,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     updateHeroContent,
     addNavigationItem,
     updateNavigationItem,
-    deleteNavigationItem
+    deleteNavigationItem,
+    refreshUnreadMessagesCount
   };
 
   return (

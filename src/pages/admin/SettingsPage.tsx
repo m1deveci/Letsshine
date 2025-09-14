@@ -13,12 +13,13 @@ import Card from '../../components/ui/Card';
 
 const settingsSchema = z.object({
   title: z.string().min(1, 'Site başlığı gereklidir'),
+  subtitle: z.string().min(1, 'Site alt başlığı gereklidir'),
   description: z.string().min(1, 'Site açıklaması gereklidir'),
   phone: z.string().min(1, 'Telefon numarası gereklidir'),
   email: z.string().email('Geçerli bir e-posta adresi giriniz'),
   address: z.string().min(1, 'Adres gereklidir'),
   smtpHost: z.string().optional(),
-  smtpPort: z.coerce.number().optional(),
+  smtpPort: z.number().optional(),
   smtpUsername: z.string().optional(),
   smtpPassword: z.string().optional(),
   smtpFromEmail: z.string().optional()
@@ -43,12 +44,12 @@ const SettingsPage: React.FC = () => {
     handleSubmit,
     setValue,
     reset,
-    trigger,
     formState: { errors, isDirty }
   } = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
       title: settings.title || '',
+      subtitle: settings.subtitle || '',
       description: settings.description || '',
       phone: settings.phone || '',
       email: settings.email || '',
@@ -70,6 +71,7 @@ const SettingsPage: React.FC = () => {
   // Settings değiştiğinde form default values'ları güncelle
   React.useEffect(() => {
     setValue('title', settings.title || '');
+    setValue('subtitle', settings.subtitle || '');
     setValue('description', settings.description || '');
     setValue('phone', settings.phone || '');
     setValue('email', settings.email || '');
@@ -85,13 +87,17 @@ const SettingsPage: React.FC = () => {
     setIsSaving(true);
     
     try {
+      // Mevcut settings'i koruyarak sadece değişen alanları güncelle
       const updatedSettings: Partial<SiteSettings> = {
+        ...settings, // Mevcut settings'i koru
         title: data.title,
+        subtitle: data.subtitle,
         description: data.description,
         phone: data.phone,
         email: data.email,
         address: data.address,
         smtp: {
+          ...settings.smtp, // Mevcut SMTP ayarlarını koru
           host: data.smtpHost || '',
           port: data.smtpPort || 587,
           username: data.smtpUsername || '',
@@ -114,7 +120,7 @@ const SettingsPage: React.FC = () => {
         throw new Error('Settings güncellenirken hata oluştu');
       }
 
-      const result = await response.json();
+      await response.json();
       
       // Context'i güncelle
       updateSettings(updatedSettings);
@@ -343,7 +349,7 @@ const SettingsPage: React.FC = () => {
 
         {/* Content */}
         <div className="lg:col-span-3">
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(onSubmit as any)}>
             <Card>
               {activeTab === 'general' && (
                 <motion.div
@@ -362,6 +368,13 @@ const SettingsPage: React.FC = () => {
                     label="Site Başlığı"
                     {...register('title')}
                     error={errors.title?.message}
+                  />
+
+                  <Input
+                    label="Site Alt Başlığı"
+                    {...register('subtitle')}
+                    error={errors.subtitle?.message}
+                    placeholder="Örn: İnsan Kaynakları Danışmanlığı"
                   />
 
                   <div>
@@ -422,7 +435,7 @@ const SettingsPage: React.FC = () => {
                             if (file.type.startsWith('image/')) {
                               const event = {
                                 target: { files: [file] }
-                              } as React.ChangeEvent<HTMLInputElement>;
+                              } as unknown as React.ChangeEvent<HTMLInputElement>;
                               handleLogoUpload(event);
                             }
                           }

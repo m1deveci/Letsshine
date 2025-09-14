@@ -19,7 +19,7 @@ const ContactPage: React.FC = () => {
       icon: Phone,
       title: 'Telefon',
       info: settings.phone,
-      description: 'Size hızlıca ulaşabilirsiniz'
+      description: 'Bize hızlıca ulaşabilirsiniz'
     },
     {
       icon: Mail,

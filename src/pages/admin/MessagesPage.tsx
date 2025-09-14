@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, MailOpen, Eye, Trash2, Calendar, User, Phone, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApp } from '../../contexts/AppContext';
 import { ContactMessage } from '../../types';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -10,6 +11,7 @@ import Swal from 'sweetalert2';
 
 const MessagesPage: React.FC = () => {
   const { token } = useAuth();
+  const { refreshUnreadMessagesCount } = useApp();
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,6 +75,11 @@ const MessagesPage: React.FC = () => {
             : msg
         )
       );
+
+      // Refresh unread count in sidebar
+      if (refreshUnreadMessagesCount) {
+        refreshUnreadMessagesCount();
+      }
     } catch (error) {
       console.error('Error marking message as read:', error);
     }

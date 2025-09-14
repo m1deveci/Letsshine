@@ -236,55 +236,54 @@ app.post('/api/applications', async (req, res) => {
 
 app.get('/api/settings', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM site_settings ORDER BY id LIMIT 1');
-    if (result.rows.length === 0) {
-      return res.json({
-        title: 'Let\'s Shine',
-        description: 'İnsan Odaklı Çözümler',
-        logo: null,
-        favicon: null,
-        phone: '+90 (XXX) XXX XX XX',
-        email: 'info@letsshine.com',
-        address: 'İzmir, Türkiye',
-        socialMedia: {
-          linkedin: '',
-          twitter: '',
-          instagram: '',
-          facebook: ''
-        },
-        smtp: {
-          host: '',
-          port: 587,
-          username: '',
-          password: '',
-          fromEmail: 'info@letsshine.com'
-        }
-      });
-    }
+    // Get all settings from key-value table
+    const result = await pool.query('SELECT setting_key, setting_value FROM site_settings');
     
-    const row = result.rows[0];
-    res.json({
-      title: row.title,
-      description: row.description,
-      logo: row.logo,
-      favicon: row.favicon,
-      phone: row.phone,
-      email: row.email,
-      address: row.address,
+    // Default values
+    let settings = {
+      title: 'Let\'s Shine',
+      subtitle: 'İnsan Kaynakları',
+      description: 'İnsan Odaklı Çözümler',
+      logo: null,
+      favicon: null,
+      phone: '+90 (XXX) XXX XX XX',
+      email: 'info@letsshine.com',
+      address: 'İzmir, Türkiye',
       socialMedia: {
-        linkedin: row.linkedin || '',
-        twitter: row.twitter || '',
-        instagram: row.instagram || '',
-        facebook: row.facebook || ''
+        linkedin: '',
+        twitter: '',
+        instagram: '',
+        facebook: ''
       },
       smtp: {
-        host: row.smtp_host || '',
-        port: row.smtp_port || 587,
-        username: row.smtp_username || '',
-        password: row.smtp_password || '',
-        fromEmail: row.smtp_from_email || 'info@letsshine.com'
+        host: '',
+        port: 587,
+        username: '',
+        password: '',
+        fromEmail: 'info@letsshine.com'
+      }
+    };
+    
+    // Merge settings from database
+    result.rows.forEach(row => {
+      if (row.setting_key === 'site_info') {
+        const siteInfo = row.setting_value;
+        settings.title = siteInfo.title || settings.title;
+        settings.subtitle = siteInfo.subtitle || settings.subtitle;
+        settings.description = siteInfo.description || settings.description;
+        settings.logo = siteInfo.logo || settings.logo;
+        settings.favicon = siteInfo.favicon || settings.favicon;
+        settings.phone = siteInfo.phone || settings.phone;
+        settings.email = siteInfo.email || settings.email;
+        settings.address = siteInfo.address || settings.address;
+      } else if (row.setting_key === 'social_media') {
+        settings.socialMedia = { ...settings.socialMedia, ...row.setting_value };
+      } else if (row.setting_key === 'smtp_config') {
+        settings.smtp = { ...settings.smtp, ...row.setting_value };
       }
     });
+    
+    res.json(settings);
   } catch (error) {
     console.error('Error fetching settings:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -329,87 +328,108 @@ app.post('/api/admin/login', authLimiter, async (req, res) => {
 
 app.put('/api/settings', authenticateAdmin, async (req, res) => {
   try {
-    const { title, description, logo, favicon, phone, email, address, socialMedia, smtp } = req.body;
+    const { title, subtitle, description, logo, favicon, phone, email, address, socialMedia, smtp } = req.body;
     
-    // Check if settings exist
-    const existingResult = await pool.query('SELECT * FROM site_settings ORDER BY id LIMIT 1');
+    // Get current settings first
+    const currentResult = await pool.query('SELECT setting_key, setting_value FROM site_settings');
+    const currentSettings = {};
+    currentResult.rows.forEach(row => {
+      currentSettings[row.setting_key] = row.setting_value;
+    });
     
-    if (existingResult.rows.length === 0) {
-      // Insert new settings
-      const result = await pool.query(
-        `INSERT INTO site_settings (title, description, logo, favicon, phone, email, address, linkedin, twitter, instagram, facebook, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
-        [
-          title, description, logo, favicon, phone, email, address,
-          socialMedia?.linkedin || '', socialMedia?.twitter || '', socialMedia?.instagram || '', socialMedia?.facebook || '',
-          smtp?.host || '', smtp?.port || 587, smtp?.username || '', smtp?.password || '', smtp?.fromEmail || email
-        ]
-      );
+    // Update site_info - merge with existing data
+    if (title !== undefined || subtitle !== undefined || description !== undefined || logo !== undefined || 
+        favicon !== undefined || phone !== undefined || email !== undefined || address !== undefined) {
+      const currentSiteInfo = currentSettings.site_info || {};
+      const siteInfo = {
+        ...currentSiteInfo,
+        ...(title !== undefined && { title }),
+        ...(subtitle !== undefined && { subtitle }),
+        ...(description !== undefined && { description }),
+        ...(logo !== undefined && { logo }),
+        ...(favicon !== undefined && { favicon }),
+        ...(phone !== undefined && { phone }),
+        ...(email !== undefined && { email }),
+        ...(address !== undefined && { address })
+      };
       
-      const row = result.rows[0];
-      res.json({
-        title: row.title,
-        description: row.description,
-        logo: row.logo,
-        favicon: row.favicon,
-        phone: row.phone,
-        email: row.email,
-        address: row.address,
-        socialMedia: {
-          linkedin: row.linkedin || '',
-          twitter: row.twitter || '',
-          instagram: row.instagram || '',
-          facebook: row.facebook || ''
-        },
-        smtp: {
-          host: row.smtp_host || '',
-          port: row.smtp_port || 587,
-          username: row.smtp_username || '',
-          password: row.smtp_password || '',
-          fromEmail: row.smtp_from_email || 'info@letsshine.com'
-        }
-      });
-    } else {
-      // Update existing settings
-      const result = await pool.query(
-        `UPDATE site_settings SET 
-         title = $1, description = $2, logo = $3, favicon = $4, phone = $5, email = $6, address = $7,
-         linkedin = $8, twitter = $9, instagram = $10, facebook = $11,
-         smtp_host = $12, smtp_port = $13, smtp_username = $14, smtp_password = $15, smtp_from_email = $16,
-         updated_at = NOW()
-         WHERE id = $17 RETURNING *`,
-        [
-          title, description, logo, favicon, phone, email, address,
-          socialMedia?.linkedin || '', socialMedia?.twitter || '', socialMedia?.instagram || '', socialMedia?.facebook || '',
-          smtp?.host || '', smtp?.port || 587, smtp?.username || '', smtp?.password || '', smtp?.fromEmail || email,
-          existingResult.rows[0].id
-        ]
+      await pool.query(
+        `INSERT INTO site_settings (setting_key, setting_value) 
+         VALUES ('site_info', $1) 
+         ON CONFLICT (setting_key) 
+         DO UPDATE SET setting_value = $1, updated_at = NOW()`,
+        [JSON.stringify(siteInfo)]
       );
-      
-      const row = result.rows[0];
-      res.json({
-        title: row.title,
-        description: row.description,
-        logo: row.logo,
-        favicon: row.favicon,
-        phone: row.phone,
-        email: row.email,
-        address: row.address,
-        socialMedia: {
-          linkedin: row.linkedin || '',
-          twitter: row.twitter || '',
-          instagram: row.instagram || '',
-          facebook: row.facebook || ''
-        },
-        smtp: {
-          host: row.smtp_host || '',
-          port: row.smtp_port || 587,
-          username: row.smtp_username || '',
-          password: row.smtp_password || '',
-          fromEmail: row.smtp_from_email || 'info@letsshine.com'
-        }
-      });
     }
+    
+    // Update social_media - merge with existing data
+    if (socialMedia !== undefined) {
+      const currentSocialMedia = currentSettings.social_media || {};
+      const socialMediaData = {
+        ...currentSocialMedia,
+        ...socialMedia
+      };
+      
+      await pool.query(
+        `INSERT INTO site_settings (setting_key, setting_value) 
+         VALUES ('social_media', $1) 
+         ON CONFLICT (setting_key) 
+         DO UPDATE SET setting_value = $1, updated_at = NOW()`,
+        [JSON.stringify(socialMediaData)]
+      );
+    }
+    
+    // Update smtp_config - merge with existing data
+    if (smtp !== undefined) {
+      const currentSmtp = currentSettings.smtp_config || {};
+      const smtpData = {
+        ...currentSmtp,
+        ...smtp
+      };
+      
+      await pool.query(
+        `INSERT INTO site_settings (setting_key, setting_value) 
+         VALUES ('smtp_config', $1) 
+         ON CONFLICT (setting_key) 
+         DO UPDATE SET setting_value = $1, updated_at = NOW()`,
+        [JSON.stringify(smtpData)]
+      );
+    }
+    
+    // Return updated settings by fetching from database
+    const updatedResult = await pool.query('SELECT setting_key, setting_value FROM site_settings');
+    const updatedSettings = {};
+    updatedResult.rows.forEach(row => {
+      updatedSettings[row.setting_key] = row.setting_value;
+    });
+    
+    const siteInfo = updatedSettings.site_info || {};
+    const socialMediaData = updatedSettings.social_media || {};
+    const smtpData = updatedSettings.smtp_config || {};
+    
+    res.json({
+      title: siteInfo.title || 'Let\'s Shine',
+      subtitle: siteInfo.subtitle || 'İnsan Kaynakları',
+      description: siteInfo.description || 'İnsan Odaklı Çözümler',
+      logo: siteInfo.logo || null,
+      favicon: siteInfo.favicon || null,
+      phone: siteInfo.phone || '+90 (XXX) XXX XX XX',
+      email: siteInfo.email || 'info@letsshine.com',
+      address: siteInfo.address || 'İzmir, Türkiye',
+      socialMedia: {
+        linkedin: socialMediaData.linkedin || '',
+        twitter: socialMediaData.twitter || '',
+        instagram: socialMediaData.instagram || '',
+        facebook: socialMediaData.facebook || ''
+      },
+      smtp: {
+        host: smtpData.host || '',
+        port: smtpData.port || 587,
+        username: smtpData.username || '',
+        password: smtpData.password || '',
+        fromEmail: smtpData.fromEmail || 'info@letsshine.com'
+      }
+    });
   } catch (error) {
     console.error('Error updating settings:', error);
     res.status(500).json({ error: 'Internal server error' });
