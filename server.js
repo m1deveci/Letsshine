@@ -59,11 +59,11 @@ app.use((req, res, next) => {
   // Content Security Policy
   res.setHeader('Content-Security-Policy', 
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; " +
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: blob:; " +
     "font-src 'self' data:; " +
-    "connect-src 'self' http://localhost:3030 https://letsshine.com.tr; " +
+    "connect-src 'self' http://localhost:3030 https://letsshine.com.tr https://cloudflareinsights.com; " +
     "frame-ancestors 'none';"
   );
   
