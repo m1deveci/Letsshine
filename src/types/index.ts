@@ -1,9 +1,29 @@
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  tooltip?: string;
+  value: string;
+}
+
+export interface ServiceProperty {
+  id: string;
+  key: string;
+  value: string;
+  type: 'text' | 'number' | 'boolean' | 'url' | 'email';
+  isRequired?: boolean;
+  order: number;
+}
+
 export interface Service {
   id: string;
   title: string;
   description: string;
   content: string;
   features: string[];
+  properties?: ServiceProperty[];
+  categories?: ServiceCategory[];
   icon: string;
   slug: string;
   isActive: boolean;
@@ -19,6 +39,7 @@ export interface Application {
   serviceId: string;
   serviceName: string;
   category?: string;
+  selectedFeatures?: string[];
   message?: string;
   status: 'pending' | 'reviewed' | 'contacted' | 'completed';
   createdAt: Date;
@@ -55,26 +76,6 @@ export interface User {
   role: 'admin';
 }
 
-export interface AboutContent {
-  id: string;
-  title: string;
-  subtitle?: string;
-  content: string; // Rich text content
-  heroImage?: string;
-  sections: AboutSection[];
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface AboutSection {
-  id: string;
-  title: string;
-  content: string; // Rich text content
-  image?: string;
-  order: number;
-  type: 'text' | 'image-text' | 'text-image' | 'full-image';
-}
 
 export interface TeamMember {
   id: string;
@@ -91,6 +92,18 @@ export interface TeamMember {
   expertise: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ContactMessage {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  createdAt: Date;
+  readStatus: boolean;
+  replyStatus: boolean;
 }
 
 export interface HeroContent {

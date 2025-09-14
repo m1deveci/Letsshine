@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +22,8 @@ const LoginPage: React.FC = () => {
   const [loginError, setLoginError] = useState('');
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/admin';
 
   const {
     register,
@@ -45,7 +47,7 @@ const LoginPage: React.FC = () => {
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   const onSubmit = async (data: LoginFormData) => {
@@ -54,7 +56,7 @@ const LoginPage: React.FC = () => {
       const success = await login(data.email, data.password, data.rememberMe);
       
       if (success) {
-        navigate('/admin');
+        navigate(redirectTo);
       } else {
         setLoginError('E-posta veya şifre hatalı');
       }

@@ -233,6 +233,26 @@ const ServicesManagement: React.FC = () => {
               )}
             </div>
 
+            {/* Properties Section */}
+            {service.properties && service.properties.length > 0 && (
+              <div className="border-t border-gray-200 pt-3 mb-4">
+                <p className="text-xs font-semibold text-gray-700 mb-2">Hizmet Özellikleri:</p>
+                <div className="space-y-1">
+                  {service.properties.slice(0, 2).map((property, index) => (
+                    <div key={index} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 font-medium">{property.key}:</span>
+                      <span className="text-blue-600 font-semibold">{property.value}</span>
+                    </div>
+                  ))}
+                  {service.properties.length > 2 && (
+                    <p className="text-xs text-gray-500 text-center">
+                      +{service.properties.length - 2} diğer özellik
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between text-sm text-gray-500">
               <span>Slug: {service.slug}</span>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${

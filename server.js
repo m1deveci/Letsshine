@@ -19,9 +19,9 @@ const PORT = process.env.PORT || 3030;
 const pool = new pg.Pool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'letsshine',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || undefined,
+  database: process.env.DB_NAME || 'letsshine_db',
+  user: process.env.DB_USER || 'letsshine_user',
+  password: process.env.DB_PASSWORD || 'letsshine2025!',
   // Connection pool settings
   max: 20,
   idleTimeoutMillis: 30000,
@@ -120,7 +120,8 @@ const upload = multer({
 // API Routes
 app.get('/api/services', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM services ORDER BY order_position');
+    const result = await pool.query('SELECT * FROM services ORDER BY id');
+    console.log('Services query result:', result.rows.length, 'rows');
     res.json(result.rows.map(row => ({
       id: row.id.toString(),
       title: row.title,
@@ -130,7 +131,7 @@ app.get('/api/services', async (req, res) => {
       icon: row.icon,
       slug: row.slug,
       isActive: row.is_active !== undefined ? row.is_active : true,
-      order: row.order_position,
+      order: row.order_position || 0,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     })));
@@ -587,9 +588,14 @@ app.get('/api/admin/services', authenticateAdmin, async (req, res) => {
 });
 
 // Services CRUD endpoints
-app.post('/api/services', async (req, res) => {
+app.post('/api/services', authenticateAdmin, async (req, res) => {
   try {
     const { title, description, content, features, icon, slug, order, isActive } = req.body;
+    
+    // Validation
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    }
     
     const result = await pool.query(
       'INSERT INTO services (title, description, content, features, icon, slug, order_position, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
@@ -622,10 +628,15 @@ app.post('/api/services', async (req, res) => {
   }
 });
 
-app.put('/api/services/:id', async (req, res) => {
+app.put('/api/services/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, content, features, icon, slug, order, isActive } = req.body;
+    
+    // Validation
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    }
     
     const result = await pool.query(
       'UPDATE services SET title = $1, description = $2, content = $3, features = $4, icon = $5, slug = $6, order_position = $7, is_active = $8, updated_at = NOW() WHERE id = $9 RETURNING *',
@@ -662,7 +673,7 @@ app.put('/api/services/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/services/:id', async (req, res) => {
+app.delete('/api/services/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -700,123 +711,6 @@ app.put('/api/admin/applications/:id/status', authenticateAdmin, async (req, res
   }
 });
 
-// About Content API Route
-app.get('/api/about', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM about_content ORDER BY order_position');
-    const sections = result.rows.map(row => ({
-      id: row.id.toString(),
-      title: row.title,
-      content: row.content,
-      image: row.image,
-      order: row.order_position
-    }));
-    
-    res.json({
-      title: 'Hakkımızda',
-      subtitle: 'İnsan Odaklı Çözümler',
-      description: 'Let\'s Shine olarak, insan kaynakları alanında uzman ekibimizle şirketlerinizin en değerli varlığı olan insan kaynağını en verimli şekilde yönetmenize yardımcı oluyoruz.',
-      sections: sections
-    });
-  } catch (error) {
-    console.error('Error fetching about content:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Admin About Content API Routes
-app.get('/api/admin/about', authenticateAdmin, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM about_content ORDER BY order_position');
-    const sections = result.rows.map(row => ({
-      id: row.id.toString(),
-      title: row.title,
-      content: row.content,
-      image: row.image,
-      order: row.order_position
-    }));
-    
-    res.json({
-      title: 'Hakkımızda',
-      subtitle: 'İnsan Odaklı Çözümler',
-      description: 'Let\'s Shine olarak, insan kaynakları alanında uzman ekibimizle şirketlerinizin en değerli varlığı olan insan kaynağını en verimli şekilde yönetmenize yardımcı oluyoruz.',
-      sections: sections
-    });
-  } catch (error) {
-    console.error('Error fetching about content:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.post('/api/admin/about/sections', authenticateAdmin, async (req, res) => {
-  try {
-    const { title, content, image, order } = req.body;
-    
-    const result = await pool.query(
-      'INSERT INTO about_content (title, content, image, order_position) VALUES ($1, $2, $3, $4) RETURNING *',
-      [title, content, image, order]
-    );
-    
-    const newSection = {
-      id: result.rows[0].id.toString(),
-      title: result.rows[0].title,
-      content: result.rows[0].content,
-      image: result.rows[0].image,
-      order: result.rows[0].order_position
-    };
-    
-    res.status(201).json(newSection);
-  } catch (error) {
-    console.error('Error adding about section:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.put('/api/admin/about/sections/:id', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, content, image, order } = req.body;
-    
-    const result = await pool.query(
-      'UPDATE about_content SET title = $1, content = $2, image = $3, order_position = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
-      [title, content, image, order, id]
-    );
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Section not found' });
-    }
-    
-    const updatedSection = {
-      id: result.rows[0].id.toString(),
-      title: result.rows[0].title,
-      content: result.rows[0].content,
-      image: result.rows[0].image,
-      order: result.rows[0].order_position
-    };
-    
-    res.json(updatedSection);
-  } catch (error) {
-    console.error('Error updating about section:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.delete('/api/admin/about/sections/:id', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const result = await pool.query('DELETE FROM about_content WHERE id = $1 RETURNING *', [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Section not found' });
-    }
-    
-    res.json({ message: 'Section deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting about section:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // Public Applications API Route (for form submissions)
 app.get('/api/applications', async (req, res) => {
@@ -1121,6 +1015,109 @@ app.post('/api/admin/upload', authenticateAdmin, upload.single('image'), async (
     });
   } catch (error) {
     console.error('Error uploading file:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Contact Messages API
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, phone, subject, message } = req.body;
+
+    // Validation
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO contact_messages (name, email, phone, subject, message) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [name, email, phone, subject, message]
+    );
+
+    res.status(201).json({
+      id: result.rows[0].id,
+      message: 'Mesajınız başarıyla gönderildi'
+    });
+  } catch (error) {
+    console.error('Error saving contact message:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/admin/messages', authenticateAdmin, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const countResult = await pool.query('SELECT COUNT(*) FROM contact_messages');
+    const totalCount = parseInt(countResult.rows[0].count);
+
+    // Get messages with pagination
+    const result = await pool.query(
+      'SELECT * FROM contact_messages ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+
+    res.json({
+      messages: result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        phone: row.phone,
+        subject: row.subject,
+        message: row.message,
+        createdAt: row.created_at,
+        readStatus: row.read_status,
+        replyStatus: row.reply_status
+      })),
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching contact messages:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/admin/messages/:id/read', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'UPDATE contact_messages SET read_status = TRUE WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Mesaj bulunamadı' });
+    }
+
+    res.json({ message: 'Mesaj okundu olarak işaretlendi' });
+  } catch (error) {
+    console.error('Error updating message read status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/admin/messages/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query('DELETE FROM contact_messages WHERE id = $1 RETURNING *', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Mesaj bulunamadı' });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting contact message:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

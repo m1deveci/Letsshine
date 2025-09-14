@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Save, Settings, Mail, Globe, Phone, MapPin, Image, Upload } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { SiteSettings } from '../../types';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -35,17 +36,13 @@ const SettingsPage: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const { settings, updateSettings } = useApp();
-
-  // Initialize previews with existing logo/favicon
-  React.useEffect(() => {
-    if (settings.logo) setLogoPreview(settings.logo);
-    if (settings.favicon) setFaviconPreview(settings.favicon);
-  }, [settings.logo, settings.favicon]);
+  const { token } = useAuth();
 
   const {
     register,
     handleSubmit,
     setValue,
+    reset,
     trigger,
     formState: { errors, isDirty }
   } = useForm<SettingsFormData>({
@@ -64,13 +61,30 @@ const SettingsPage: React.FC = () => {
     }
   });
 
+  // Initialize previews with existing logo/favicon
+  React.useEffect(() => {
+    if (settings.logo) setLogoPreview(settings.logo);
+    if (settings.favicon) setFaviconPreview(settings.favicon);
+  }, [settings.logo, settings.favicon]);
+
+  // Settings değiştiğinde form default values'ları güncelle
+  React.useEffect(() => {
+    setValue('title', settings.title || '');
+    setValue('description', settings.description || '');
+    setValue('phone', settings.phone || '');
+    setValue('email', settings.email || '');
+    setValue('address', settings.address || '');
+    setValue('smtpHost', settings.smtp?.host || '');
+    setValue('smtpPort', settings.smtp?.port || 587);
+    setValue('smtpUsername', settings.smtp?.username || '');
+    setValue('smtpPassword', settings.smtp?.password || '');
+    setValue('smtpFromEmail', settings.smtp?.fromEmail || '');
+  }, [settings, setValue]);
+
   const onSubmit = async (data: SettingsFormData) => {
     setIsSaving(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       const updatedSettings: Partial<SiteSettings> = {
         title: data.title,
         description: data.description,
@@ -86,13 +100,38 @@ const SettingsPage: React.FC = () => {
         }
       };
 
+      // API çağrısı yap
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedSettings),
+      });
+
+      if (!response.ok) {
+        throw new Error('Settings güncellenirken hata oluştu');
+      }
+
+      const result = await response.json();
+      
+      // Context'i güncelle
       updateSettings(updatedSettings);
+      
+      // Form'u reset et ki dirty state temizlensin
+      reset(data);
+      
+      setSuccessMessage('Ayarlar başarıyla güncellendi!');
       setShowSuccess(true);
 
       // Hide success message after 3 seconds
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       console.error('Settings update error:', error);
+      setSuccessMessage('Ayarlar güncellenirken hata oluştu!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     } finally {
       setIsSaving(false);
     }

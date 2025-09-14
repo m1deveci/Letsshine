@@ -1,11 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Service, SiteSettings, Application, AboutContent, AboutSection, TeamMember, HeroContent, NavigationItem } from '../types';
+import { Service, SiteSettings, Application, TeamMember, HeroContent, NavigationItem } from '../types';
 
 interface AppContextType {
   services: Service[];
   applications: Application[];
   settings: SiteSettings;
-  aboutContent: AboutContent | null;
   teamMembers: TeamMember[];
   heroContent: HeroContent | null;
   navigationItems: NavigationItem[];
@@ -15,11 +14,6 @@ interface AppContextType {
   addApplication: (application: Omit<Application, 'id' | 'createdAt' | 'status'>) => void;
   updateApplicationStatus: (id: string, status: Application['status']) => void;
   updateSettings: (settings: Partial<SiteSettings>) => void;
-  updateAboutContent: (about: AboutContent) => void;
-  addAboutContent: (about: AboutContent) => void;
-  addAboutSection: (section: Omit<AboutSection, 'id'>) => void;
-  updateAboutSection: (id: string, section: Partial<AboutSection>) => void;
-  deleteAboutSection: (id: string) => void;
   addTeamMember: (member: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateTeamMember: (id: string, member: Partial<TeamMember>) => void;
   deleteTeamMember: (id: string) => void;
@@ -57,31 +51,6 @@ export const useApp = () => {
 //   }
 // };
 
-const defaultAboutContent: AboutContent = {
-  id: '1',
-  title: 'Hakkımızda',
-  subtitle: 'İnsan Kaynakları alanında güvenilir çözüm ortağınız',
-  content: '<p>Let\'s Shine olarak, insan kaynakları alanında profesyonel danışmanlık hizmetleri sunuyoruz. Yılların verdiği deneyim ve modern yaklaşımlarla, organizasyonların en değerli varlığı olan insan kaynağını optimize etmeye odaklanıyoruz.</p>',
-  sections: [
-    {
-      id: '1',
-      title: 'Misyonumuz',
-      content: '<p>İnsan odaklı yaklaşımımızla, organizasyonların sürdürülebilir başarıya ulaşması için stratejik insan kaynakları çözümleri geliştirmek ve uygulamaktır.</p>',
-      order: 1,
-      type: 'text'
-    },
-    {
-      id: '2',
-      title: 'Vizyonumuz',
-      content: '<p>İnsan kaynakları danışmanlığında öncü ve güvenilir bir marka olmak, müşterilerimizin iş sonuçlarına doğrudan katkı sağlayan çözümler sunmaktır.</p>',
-      order: 2,
-      type: 'text'
-    }
-  ],
-  isActive: true,
-  createdAt: new Date(),
-  updatedAt: new Date()
-};
 
 const defaultHeroContent: HeroContent = {
   id: '1',
@@ -108,7 +77,7 @@ const defaultHeroContent: HeroContent = {
 
 const defaultNavigationItems: NavigationItem[] = [
   { id: '1', name: 'Ana Sayfa', href: '/', order: 1, isActive: true },
-  { id: '2', name: 'Hakkımızda', href: '/hakkimizda', order: 2, isActive: true },
+  { id: '2', name: 'Ekibimiz', href: '/ekibimiz', order: 2, isActive: true },
   { id: '3', name: 'Hizmetlerimiz', href: '/hizmetler', order: 3, isActive: true },
   { id: '4', name: 'İletişim', href: '/iletisim', order: 4, isActive: true }
 ];
@@ -204,13 +173,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       fromEmail: 'info@letsshine.com.tr'
     }
   });
-  const [aboutContent, setAboutContent] = useState<AboutContent | null>(defaultAboutContent);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [heroContent, setHeroContent] = useState<HeroContent | null>(defaultHeroContent);
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(defaultNavigationItems);
-  
-  // Get token from sessionStorage for API calls
-  const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
 
   // Database'den veri çekme fonksiyonları
   const fetchSettings = async () => {
@@ -261,17 +226,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
-  const fetchAboutContent = async () => {
-    try {
-      const response = await fetch('/api/about');
-      if (response.ok) {
-        const data = await response.json();
-        setAboutContent(data);
-      }
-    } catch (error) {
-      console.error('Error fetching about content:', error);
-    }
-  };
 
   const fetchTeamMembers = async () => {
     try {
@@ -295,17 +249,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     fetchServices();
     fetchApplications();
     fetchSettings();
-    fetchAboutContent();
     fetchTeamMembers();
     fetchHeroContent();
   }, []);
 
   const addService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
       const response = await fetch('/api/services', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify(serviceData)
       });
@@ -329,10 +284,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const updateService = async (id: string, serviceData: Partial<Service>) => {
     try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
       const response = await fetch(`/api/services/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify(serviceData)
       });
@@ -356,8 +313,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const deleteService = async (id: string) => {
     try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
       const response = await fetch(`/api/services/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        }
       });
       
       if (response.ok) {
@@ -415,84 +376,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
-  const updateAboutContent = (newAboutContent: AboutContent) => {
-    setAboutContent({ ...newAboutContent, updatedAt: new Date() });
-  };
-
-  const addAboutContent = (about: AboutContent) => {
-    setAboutContent(about);
-  };
-
-  const addAboutSection = async (sectionData: Omit<AboutSection, 'id'>) => {
-    try {
-      const response = await fetch('/api/admin/about/sections', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(sectionData)
-      });
-      
-      if (response.ok) {
-        const newSection = await response.json();
-        setAboutContent(prev => prev ? {
-          ...prev,
-          sections: [...prev.sections, newSection].sort((a, b) => a.order - b.order),
-          updatedAt: new Date()
-        } : null);
-      }
-    } catch (error) {
-      console.error('Error adding about section:', error);
-    }
-  };
-
-  const updateAboutSection = async (id: string, sectionData: Partial<AboutSection>) => {
-    try {
-      const response = await fetch(`/api/admin/about/sections/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(sectionData)
-      });
-      
-      if (response.ok) {
-        const updatedSection = await response.json();
-        setAboutContent(prev => prev ? {
-          ...prev,
-          sections: prev.sections.map(section => 
-            section.id === id ? updatedSection : section
-          ).sort((a, b) => a.order - b.order),
-          updatedAt: new Date()
-        } : null);
-      }
-    } catch (error) {
-      console.error('Error updating about section:', error);
-    }
-  };
-
-  const deleteAboutSection = async (id: string) => {
-    try {
-      const response = await fetch(`/api/admin/about/sections/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        setAboutContent(prev => prev ? {
-          ...prev,
-          sections: prev.sections.filter(section => section.id !== id),
-          updatedAt: new Date()
-        } : null);
-      }
-    } catch (error) {
-      console.error('Error deleting about section:', error);
-    }
-  };
 
   const addTeamMember = async (memberData: Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -640,7 +523,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     services,
     applications,
     settings,
-    aboutContent,
     teamMembers,
     heroContent,
     navigationItems,
@@ -650,11 +532,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     addApplication,
     updateApplicationStatus,
     updateSettings,
-    updateAboutContent,
-    addAboutContent,
-    addAboutSection,
-    updateAboutSection,
-    deleteAboutSection,
     addTeamMember,
     updateTeamMember,
     deleteTeamMember,

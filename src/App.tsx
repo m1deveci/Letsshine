@@ -10,7 +10,6 @@ import Footer from './components/layout/Footer';
 
 // Public Pages
 import HomePage from './pages/HomePage';
-import About from './pages/About';
 import TeamPage from './pages/TeamPage';
 import ServicesPage from './pages/ServicesPage';
 import ServiceDetailPage from './pages/ServiceDetailPage';
@@ -20,10 +19,10 @@ import ContactPage from './pages/ContactPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import LoginPage from './pages/admin/LoginPage';
-import AboutManagement from './pages/admin/AboutManagement';
 import ServicesManagement from './pages/admin/ServicesManagement';
 import TeamManagement from './pages/admin/TeamManagement';
 import ApplicationsManagement from './pages/admin/ApplicationsManagement';
+import MessagesPage from './pages/admin/MessagesPage';
 import SettingsPage from './pages/admin/SettingsPage';
 import HeroManagement from './pages/admin/HeroManagement';
 import NavigationManagement from './pages/admin/NavigationManagement';
@@ -54,7 +53,7 @@ function App() {
                     <main className="flex-1">
                       <Routes>
                         <Route path="/" element={<HomePage />} />
-                        <Route path="/hakkimizda" element={<TeamPage />} />
+                        <Route path="/ekibimiz" element={<TeamPage />} />
                         <Route path="/hizmetler" element={<ServicesPage />} />
                         <Route path="/hizmet/:slug" element={<ServiceDetailPage />} />
                         <Route path="/iletisim" element={<ContactPage />} />
@@ -69,10 +68,10 @@ function App() {
               <Route path="/admin/login" element={<LoginPage />} />
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
-                <Route path="about" element={<AboutManagement />} />
                 <Route path="services" element={<ServicesManagement />} />
                 <Route path="team" element={<TeamManagement />} />
                 <Route path="applications" element={<ApplicationsManagement />} />
+                <Route path="messages" element={<MessagesPage />} />
                 <Route path="pages" element={<PagesManagement />} />
                 <Route path="pages/hero" element={<HeroManagement />} />
                 <Route path="pages/navigation" element={<NavigationManagement />} />

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Menu, 
-  X, 
-  Home, 
-  Settings, 
-  Briefcase, 
-  MessageSquare, 
+import {
+  Menu,
+  X,
+  Home,
+  Settings,
+  Briefcase,
+  MessageSquare,
   LogOut,
   Users,
   FileText,
   Layout,
-  Navigation
+  Navigation,
+  Mail
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
@@ -55,15 +56,18 @@ const AdminLayout: React.FC = () => {
   }, [isAuthenticated, token]);
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    // Preserve current path for redirect after login
+    const currentPath = location.pathname;
+    const redirectUrl = currentPath !== '/admin' ? `?redirect=${encodeURIComponent(currentPath)}` : '';
+    return <Navigate to={`/admin/login${redirectUrl}`} replace />;
   }
 
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: Home },
-    { name: 'Hakkımızda', href: '/admin/about', icon: FileText },
     { name: 'Hizmetler', href: '/admin/services', icon: Briefcase },
     { name: 'Ekip', href: '/admin/team', icon: Users },
     { name: 'Başvurular', href: '/admin/applications', icon: MessageSquare },
+    { name: 'Mesajlar', href: '/admin/messages', icon: Mail },
     { name: 'Sayfa Yönetimi', href: '/admin/pages', icon: Layout, children: [
       { name: 'Ana Sayfa', href: '/admin/pages/hero', icon: Home },
       { name: 'Menü Yönetimi', href: '/admin/pages/navigation', icon: Navigation }

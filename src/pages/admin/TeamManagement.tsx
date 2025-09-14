@@ -1,24 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Users, 
-  Mail, 
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Users,
+  Mail,
   Linkedin,
   Camera,
   Save,
   X,
   Upload,
-  RefreshCw
+  RefreshCw,
+  GripVertical
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { TeamMember } from '../../types';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import ImageCropModal from '../../components/ui/ImageCropModal';
 import Swal from 'sweetalert2';
 
 interface TeamMemberForm {
@@ -39,13 +60,73 @@ interface FileUploadState {
   file: File | null;
   preview: string | null;
   uploading: boolean;
+  showCropModal: boolean;
+  originalFile: File | null;
+  croppedBlob: Blob | null;
 }
+
+interface SortableExpertiseItemProps {
+  id: string;
+  expertise: string;
+  onRemove: (expertise: string) => void;
+}
+
+const SortableExpertiseItem: React.FC<SortableExpertiseItemProps> = ({ id, expertise, onRemove }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 text-sm rounded-lg border ${
+        isDragging ? 'shadow-lg border-blue-300' : 'border-transparent'
+      } transition-all duration-200`}
+      {...attributes}
+    >
+      <div
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing mr-2 text-blue-600 hover:text-blue-800"
+      >
+        <GripVertical className="w-4 h-4" />
+      </div>
+      <span className="select-none">{expertise}</span>
+      <button
+        type="button"
+        onClick={() => onRemove(expertise)}
+        className="ml-2 text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-1 transition-colors"
+      >
+        <X className="w-3 h-3" />
+      </button>
+    </div>
+  );
+};
 
 const TeamManagement: React.FC = () => {
   const { teamMembers, addTeamMember, updateTeamMember, deleteTeamMember } = useApp();
   const { token } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   const [formData, setFormData] = useState<TeamMemberForm>({
     name: '',
     title: '',
@@ -63,7 +144,10 @@ const TeamManagement: React.FC = () => {
   const [fileUpload, setFileUpload] = useState<FileUploadState>({
     file: null,
     preview: null,
-    uploading: false
+    uploading: false,
+    showCropModal: false,
+    originalFile: null,
+    croppedBlob: null
   });
 
   const handleOpenForm = (member?: TeamMember) => {
@@ -114,7 +198,10 @@ const TeamManagement: React.FC = () => {
     setFileUpload({
       file: null,
       preview: null,
-      uploading: false
+      uploading: false,
+      showCropModal: false,
+      originalFile: null,
+      croppedBlob: null
     });
   };
 
@@ -135,6 +222,20 @@ const TeamManagement: React.FC = () => {
     }));
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = formData.expertise.findIndex(item => item === active.id);
+      const newIndex = formData.expertise.findIndex(item => item === over.id);
+
+      setFormData(prev => ({
+        ...prev,
+        expertise: arrayMove(prev.expertise, oldIndex, newIndex)
+      }));
+    }
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -153,20 +254,50 @@ const TeamManagement: React.FC = () => {
 
       setFileUpload(prev => ({
         ...prev,
-        file,
-        preview: URL.createObjectURL(file)
+        originalFile: file,
+        preview: URL.createObjectURL(file),
+        showCropModal: true,
+        file: null,
+        croppedBlob: null
       }));
     }
   };
 
+  const handleCropComplete = (croppedImageBlob: Blob) => {
+    const croppedPreviewUrl = URL.createObjectURL(croppedImageBlob);
+
+    setFileUpload(prev => ({
+      ...prev,
+      croppedBlob: croppedImageBlob,
+      file: new File([croppedImageBlob], 'cropped-image.jpg', { type: 'image/jpeg' }),
+      preview: croppedPreviewUrl,
+      showCropModal: false
+    }));
+  };
+
+  const handleCropCancel = () => {
+    setFileUpload(prev => ({
+      ...prev,
+      showCropModal: false,
+      originalFile: null,
+      preview: null
+    }));
+  };
+
   const handleFileUpload = async (): Promise<string | null> => {
-    if (!fileUpload.file) return null;
+    if (!fileUpload.file && !fileUpload.croppedBlob) return null;
 
     setFileUpload(prev => ({ ...prev, uploading: true }));
 
     try {
       const formData = new FormData();
-      formData.append('image', fileUpload.file);
+
+      // Use cropped blob if available, otherwise fall back to original file
+      if (fileUpload.croppedBlob) {
+        formData.append('image', fileUpload.croppedBlob, 'cropped-image.jpg');
+      } else if (fileUpload.file) {
+        formData.append('image', fileUpload.file);
+      }
 
       const response = await fetch('/api/admin/upload', {
         method: 'POST',
@@ -202,8 +333,8 @@ const TeamManagement: React.FC = () => {
     try {
       let imageUrl = formData.image;
       
-      // If a new file is selected, upload it first
-      if (fileUpload.file) {
+      // If a new file is selected (original or cropped), upload it first
+      if (fileUpload.file || fileUpload.croppedBlob) {
         const uploadedUrl = await handleFileUpload();
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
@@ -544,7 +675,7 @@ const TeamManagement: React.FC = () => {
                             <p className="mb-2 text-sm text-gray-500">
                               <span className="font-semibold">Fotoğraf seçmek için tıklayın</span>
                             </p>
-                            <p className="text-xs text-gray-500">JPG, PNG, GIF (Otomatik boyutlandırılır)</p>
+                            <p className="text-xs text-gray-500">JPG, PNG, GIF - Crop editörü ile düzenlenecektir</p>
                           </div>
                           <input
                             type="file"
@@ -611,12 +742,13 @@ const TeamManagement: React.FC = () => {
                 />
               </div>
 
-              {/* Expertise */}
+              {/* Expertise with Drag & Drop */}
               <div className="mt-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Uzmanlık Alanları
+                  <span className="text-xs text-gray-500 ml-2">(Sürükle-bırak ile sıralayabilirsiniz)</span>
                 </label>
-                <div className="flex gap-2 mb-2">
+                <div className="flex gap-2 mb-4">
                   <Input
                     value={newExpertise}
                     onChange={(e) => setNewExpertise(e.target.value)}
@@ -627,27 +759,43 @@ const TeamManagement: React.FC = () => {
                     type="button"
                     onClick={handleAddExpertise}
                     size="sm"
+                    leftIcon={<Plus className="w-4 h-4" />}
                   >
                     Ekle
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {formData.expertise.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+
+                {formData.expertise.length > 0 && (
+                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
                     >
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveExpertise(skill)}
-                        className="ml-2 text-blue-600 hover:text-blue-800"
+                      <SortableContext
+                        items={formData.expertise}
+                        strategy={verticalListSortingStrategy}
                       >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
+                        <div className="flex flex-wrap gap-3">
+                          {formData.expertise.map((skill) => (
+                            <SortableExpertiseItem
+                              key={skill}
+                              id={skill}
+                              expertise={skill}
+                              onRemove={handleRemoveExpertise}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  </div>
+                )}
+
+                {formData.expertise.length === 0 && (
+                  <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center text-gray-500 text-sm">
+                    Henüz uzmanlık alanı eklenmemiş
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end space-x-3 mt-8 pt-6 border-t">
@@ -696,6 +844,17 @@ const TeamManagement: React.FC = () => {
             </div>
           </Card>
         </motion.div>
+      )}
+
+      {/* Image Crop Modal */}
+      {fileUpload.showCropModal && fileUpload.originalFile && (
+        <ImageCropModal
+          isOpen={fileUpload.showCropModal}
+          onClose={handleCropCancel}
+          imageSrc={URL.createObjectURL(fileUpload.originalFile)}
+          onCropComplete={handleCropComplete}
+          aspectRatio={1} // 1:1 aspect ratio for profile photos
+        />
       )}
     </div>
   );

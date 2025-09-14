@@ -22,8 +22,6 @@ interface ContactFormProps {
 }
 
 const ContactForm: React.FC<ContactFormProps> = ({ onSuccess }) => {
-  const { addApplication } = useApp();
-  
   const {
     register,
     handleSubmit,
@@ -35,22 +33,30 @@ const ContactForm: React.FC<ContactFormProps> = ({ onSuccess }) => {
 
   const onSubmit = async (data: ContactFormData) => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      addApplication({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        serviceId: 'contact',
-        serviceName: 'İletişim Formu',
-        message: `Konu: ${data.subject}\n\n${data.message}`
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          subject: data.subject,
+          message: data.message
+        })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Form submission failed');
+      }
 
       reset();
       onSuccess?.();
     } catch (error) {
       console.error('Form submission error:', error);
+      alert('Mesaj gönderilirken bir hata oluştu. Lütfen tekrar deneyiniz.');
     }
   };
 

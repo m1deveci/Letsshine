@@ -12,8 +12,12 @@ import Card from '../ui/Card';
 const applicationSchema = z.object({
   name: z.string().min(2, 'İsim en az 2 karakter olmalıdır'),
   email: z.string().email('Geçerli bir e-posta adresi giriniz'),
-  phone: z.string().min(10, 'Telefon numarası en az 10 karakter olmalıdır'),
+  phone: z.string()
+    .min(11, 'Telefon numarası 11 haneli olmalıdır')
+    .max(11, 'Telefon numarası 11 haneli olmalıdır')
+    .regex(/^0[1-9]\d{9}$/, 'Geçerli bir Türkiye telefon numarası giriniz (05xxxxxxxxx)'),
   category: z.string().optional(),
+  selectedFeatures: z.array(z.string()).optional(),
   message: z.string().optional()
 });
 
@@ -29,12 +33,47 @@ const ServiceApplicationForm: React.FC<ServiceApplicationFormProps> = ({
   categories = [] 
 }) => {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const [phoneValue, setPhoneValue] = useState('');
   const { addApplication } = useApp();
+
+  // Telefon numarası maskeleme fonksiyonu
+  const formatPhoneNumber = (value: string) => {
+    // Sadece rakamları al
+    const numbers = value.replace(/\D/g, '');
+    
+    // Maksimum 11 haneli olsun
+    const truncated = numbers.slice(0, 11);
+    
+    // Türk telefon formatına göre maskele: 0 (5xx) xxx xx xx
+    if (truncated.length >= 4) {
+      let formatted = truncated;
+      if (truncated.length >= 7) {
+        formatted = `${truncated.slice(0, 4)} ${truncated.slice(4, 7)} ${truncated.slice(7, 9)} ${truncated.slice(9, 11)}`;
+      } else if (truncated.length >= 4) {
+        formatted = `${truncated.slice(0, 4)} ${truncated.slice(4)}`;
+      }
+      return formatted.trim();
+    }
+    
+    return truncated;
+  };
+
+  // Telefon numarası değişiklik handler'ı
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhoneValue(formatted);
+    
+    // Sadece rakamları form'a gönder
+    const numbersOnly = formatted.replace(/\D/g, '');
+    setValue('phone', numbersOnly);
+  };
   
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema)
@@ -55,6 +94,7 @@ const ServiceApplicationForm: React.FC<ServiceApplicationFormProps> = ({
           serviceId: service.id,
           serviceName: service.title,
           category: data.category,
+          selectedFeatures: selectedFeatures,
           message: data.message
         })
       });
@@ -73,10 +113,13 @@ const ServiceApplicationForm: React.FC<ServiceApplicationFormProps> = ({
         serviceId: service.id,
         serviceName: service.title,
         category: data.category,
+        selectedFeatures: selectedFeatures,
         message: data.message
       });
 
       reset();
+      setSelectedFeatures([]);
+      setPhoneValue('');
       setIsSuccess(true);
 
       // Hide success message after 5 seconds
@@ -117,7 +160,7 @@ const ServiceApplicationForm: React.FC<ServiceApplicationFormProps> = ({
           Hizmet Talebi
         </h3>
         <p className="text-gray-600">
-          {service.title} hizmeti için başvuru formunu doldurun.
+          Hizmet başvuru formunu doldurun.
         </p>
       </div>
 
@@ -128,12 +171,24 @@ const ServiceApplicationForm: React.FC<ServiceApplicationFormProps> = ({
           error={errors.name?.message}
         />
 
-        <Input
-          label="GSM No *"
-          type="tel"
-          {...register('phone')}
-          error={errors.phone?.message}
-        />
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+            GSM No *
+          </label>
+          <input
+            {...register('phone')}
+            id="phone"
+            type="tel"
+            value={phoneValue}
+            onChange={handlePhoneChange}
+            placeholder="05xx xxx xx xx"
+            maxLength={14}
+            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          />
+          {errors.phone && (
+            <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+          )}
+        </div>
 
         <Input
           label="E-posta Adresi *"
@@ -162,6 +217,34 @@ const ServiceApplicationForm: React.FC<ServiceApplicationFormProps> = ({
             {errors.category && (
               <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
             )}
+          </div>
+        )}
+
+        {/* Hizmet Özellikleri */}
+        {service.features && service.features.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Hizmet Özellikleri (İlgilendiğiniz alanları seçiniz)
+            </label>
+            <div className="space-y-2">
+              {service.features.map((feature, index) => (
+                <label key={index} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedFeatures.includes(feature)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedFeatures(prev => [...prev, feature]);
+                      } else {
+                        setSelectedFeatures(prev => prev.filter(f => f !== feature));
+                      }
+                    }}
+                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">{feature}</span>
+                </label>
+              ))}
+            </div>
           </div>
         )}
 

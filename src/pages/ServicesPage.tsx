@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Users, UserSearch, Target, GraduationCap, Heart, MessageCircle, DollarSign } from 'lucide-react';
+import { ArrowRight, Users, UserSearch, Target, GraduationCap, Heart, MessageCircle, DollarSign, Info } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import Card from '../components/ui/Card';
+import Tooltip from '../components/ui/Tooltip';
 
 const iconMap = {
   Users,
@@ -72,13 +73,38 @@ const ServicesPage: React.FC = () => {
                   <Card className="h-full group hover:shadow-lg transition-all duration-300">
                     <Link to={`/hizmet/${service.slug}`} className="block h-full">
                       <div className="flex flex-col h-full">
-                        <div className="flex items-center mb-4">
-                          <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mr-4 group-hover:bg-blue-600 transition-colors duration-300">
-                            <IconComponent className="w-7 h-7 text-blue-600 group-hover:text-white transition-colors duration-300" />
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center">
+                            <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mr-4 group-hover:bg-blue-600 transition-colors duration-300">
+                              <IconComponent className="w-7 h-7 text-blue-600 group-hover:text-white transition-colors duration-300" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                              {service.title}
+                            </h3>
                           </div>
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
-                            {service.title}
-                          </h3>
+                          {service.properties && service.properties.length > 0 && (
+                            <Tooltip
+                              content={`<div class="space-y-2">
+                                <div class="font-semibold text-white mb-2">Hizmet Özellikleri:</div>
+                                ${service.properties.map(prop =>
+                                  `<div class="flex justify-between">
+                                    <span class="text-gray-200">${prop.key}:</span>
+                                    <span class="text-white ml-2">${prop.value}</span>
+                                  </div>`
+                                ).join('')}
+                              </div>`}
+                              position="left"
+                              maxWidth={280}
+                              trigger="hover"
+                            >
+                              <div
+                                className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors cursor-pointer opacity-70 group-hover:opacity-100 transition-opacity duration-300"
+                                onClick={(e) => e.preventDefault()}
+                              >
+                                <Info className="w-5 h-5" />
+                              </div>
+                            </Tooltip>
+                          )}
                         </div>
                         
                         <p className="text-gray-600 mb-6 flex-grow leading-relaxed">
@@ -94,6 +120,26 @@ const ServicesPage: React.FC = () => {
                             </div>
                           ))}
                         </div>
+
+                        {/* Properties */}
+                        {service.properties && service.properties.length > 0 && (
+                          <div className="border-t border-gray-100 pt-4 mb-6">
+                            <h4 className="text-sm font-semibold text-gray-800 mb-3">Hizmet Detayları</h4>
+                            <div className="space-y-2">
+                              {service.properties.slice(0, 3).map((property, index) => (
+                                <div key={index} className="flex items-center justify-between text-xs text-gray-600">
+                                  <span className="font-medium">{property.key}:</span>
+                                  <span className="text-blue-600 font-medium">{property.value}</span>
+                                </div>
+                              ))}
+                              {service.properties.length > 3 && (
+                                <div className="text-xs text-gray-500 text-center pt-2">
+                                  +{service.properties.length - 3} diğer özellik
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                         
                         <div className="flex items-center text-blue-600 font-semibold group-hover:text-blue-700 transition-colors duration-300">
                           <span>Detayları İncele</span>
