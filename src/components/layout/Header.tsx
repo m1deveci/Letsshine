@@ -12,8 +12,8 @@ const Header: React.FC = () => {
   const { navigationItems } = useApp();
   
   const navigation = navigationItems
-    .filter(item => item.isActive)
-    .sort((a, b) => a.order - b.order)
+    .filter(item => item.is_active || item.isActive)
+    .sort((a, b) => (a.order_position || a.order || 0) - (b.order_position || b.order || 0))
     .map(item => ({ name: item.name, href: item.href }));
 
   const isActive = (path: string) => {
@@ -34,11 +34,11 @@ const Header: React.FC = () => {
                 <img 
                   src={settings.logo} 
                   alt="Logo" 
-                  className="h-8 sm:h-10 w-auto mr-3 object-contain max-w-[120px]"
+                  className="h-12 sm:h-16 w-auto mr-3 object-contain max-w-[180px]"
                 />
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center mr-3">
-                  <span className="text-white font-bold text-lg">LS</span>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center mr-3">
+                  <span className="text-white font-bold text-lg sm:text-xl">LS</span>
                 </div>
               )}
               <div>

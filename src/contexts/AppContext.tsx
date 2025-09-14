@@ -246,6 +246,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
+  const fetchNavigationItems = async () => {
+    try {
+      const response = await fetch('/api/navigation');
+      if (response.ok) {
+        const data = await response.json();
+        setNavigationItems(data);
+      } else {
+        // Use default if not found
+        setNavigationItems(defaultNavigationItems);
+      }
+    } catch (error) {
+      console.error('Error fetching navigation items:', error);
+      setNavigationItems(defaultNavigationItems);
+    }
+  };
+
   // Component mount olduğunda verileri çek
   useEffect(() => {
     fetchServices();
@@ -253,6 +269,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     fetchSettings();
     fetchTeamMembers();
     fetchHeroContent();
+    fetchNavigationItems();
   }, []);
 
   // Favicon'u güncelle
@@ -524,26 +541,82 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   // Navigation Management
-  const addNavigationItem = (item: Omit<NavigationItem, 'id'>) => {
-    const newItem: NavigationItem = {
-      ...item,
-      id: Date.now().toString()
-    };
-    setNavigationItems(prev => [...prev, newItem].sort((a, b) => a.order - b.order));
+  const addNavigationItem = async (item: Omit<NavigationItem, 'id'>) => {
+    try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+      const response = await fetch('/api/navigation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify(item)
+      });
+      
+      if (response.ok) {
+        const newItem = await response.json();
+        setNavigationItems(prev => [...prev, newItem].sort((a, b) => a.order - b.order));
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Navigation item eklenirken hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error adding navigation item:', error);
+      throw error;
+    }
   };
 
-  const updateNavigationItem = (id: string, item: Partial<NavigationItem>) => {
-    setNavigationItems(prev => 
-      prev.map(navItem => 
-        navItem.id === id 
-          ? { ...navItem, ...item }
-          : navItem
-      ).sort((a, b) => a.order - b.order)
-    );
+  const updateNavigationItem = async (id: string, item: Partial<NavigationItem>) => {
+    try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+      const response = await fetch(`/api/navigation/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify(item)
+      });
+      
+      if (response.ok) {
+        const updatedItem = await response.json();
+        setNavigationItems(prev => 
+          prev.map(navItem => 
+            navItem.id === id 
+              ? updatedItem
+              : navItem
+          ).sort((a, b) => a.order - b.order)
+        );
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Navigation item güncellenirken hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error updating navigation item:', error);
+      throw error;
+    }
   };
 
-  const deleteNavigationItem = (id: string) => {
-    setNavigationItems(prev => prev.filter(item => item.id !== id));
+  const deleteNavigationItem = async (id: string) => {
+    try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+      const response = await fetch(`/api/navigation/${id}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        }
+      });
+      
+      if (response.ok) {
+        setNavigationItems(prev => prev.filter(item => item.id !== id));
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Navigation item silinirken hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error deleting navigation item:', error);
+      throw error;
+    }
   };
 
   // Function to refresh unread messages count (will be set by AdminLayout)

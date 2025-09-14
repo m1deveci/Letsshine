@@ -6,19 +6,10 @@ import { useApp } from '../../contexts/AppContext';
 const Footer: React.FC = () => {
   const { settings } = useApp();
 
-  const serviceCategories = [
-    'İşe Alım',
-    'Eğitim',
-    'Motivasyonel Faaliyetler',
-    'Organizasyonel Yapılanma',
-    'Performans ve Gelişim',
-    'Ücretlendirme'
-  ];
-
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
@@ -52,20 +43,6 @@ const Footer: React.FC = () => {
                 <span className="text-sm">{settings.address}</span>
               </div>
             </div>
-          </div>
-
-          {/* Services */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Hizmetlerimiz</h3>
-            <ul className="space-y-2">
-              {serviceCategories.map((service) => (
-                <li key={service}>
-                  <span className="text-gray-300 text-sm hover:text-white transition-colors cursor-pointer">
-                    {service}
-                  </span>
-                </li>
-              ))}
-            </ul>
           </div>
 
           {/* Quick Links */}

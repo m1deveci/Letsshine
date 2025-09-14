@@ -4,6 +4,25 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Save, Navigation, Plus, Trash2, Edit, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useApp } from '../../contexts/AppContext';
 import { NavigationItem } from '../../types';
 import Button from '../../components/ui/Button';
@@ -13,12 +32,87 @@ import Card from '../../components/ui/Card';
 const navigationSchema = z.object({
   name: z.string().min(1, 'Menü adı gereklidir'),
   href: z.string().min(1, 'URL gereklidir'),
-  order: z.coerce.number().min(1, 'Sıra numarası gereklidir'),
   isActive: z.boolean(),
   isExternal: z.boolean().optional()
 });
 
 type NavigationFormData = z.infer<typeof navigationSchema>;
+
+interface SortableItemProps {
+  item: NavigationItem;
+  onEdit: (item: NavigationItem) => void;
+  onDelete: (id: string) => void;
+}
+
+const SortableItem: React.FC<SortableItemProps> = ({ item, onEdit, onDelete }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border"
+    >
+      <div className="flex items-center space-x-4">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing"
+        >
+          <GripVertical className="w-5 h-5 text-gray-400" />
+        </div>
+        <div>
+          <div className="flex items-center space-x-2">
+            <span className="font-medium text-gray-900">{item.name}</span>
+            {!item.isActive && (
+              <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                Pasif
+              </span>
+            )}
+            {item.isExternal && (
+              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                Dış Link
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-500">{item.href}</p>
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onEdit(item)}
+          className="text-blue-600 hover:text-blue-700"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onDelete(item.id)}
+          className="text-red-600 hover:text-red-700"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const NavigationManagement: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
@@ -28,6 +122,13 @@ const NavigationManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const { navigationItems, addNavigationItem, updateNavigationItem, deleteNavigationItem } = useApp();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const {
     register,
@@ -40,11 +141,34 @@ const NavigationManagement: React.FC = () => {
     defaultValues: {
       name: '',
       href: '',
-      order: navigationItems.length + 1,
       isActive: true,
       isExternal: false
     }
   });
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = navigationItems.findIndex(item => item.id === active.id);
+      const newIndex = navigationItems.findIndex(item => item.id === over.id);
+      
+      const reorderedItems = arrayMove(navigationItems, oldIndex, newIndex);
+      
+      // Update order for all items
+      for (let i = 0; i < reorderedItems.length; i++) {
+        const item = reorderedItems[i];
+        await updateNavigationItem(item.id, { order_position: i + 1 });
+      }
+      
+      setSuccessMessage('Menü sıralaması güncellendi!');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setSuccessMessage('');
+      }, 3000);
+    }
+  };
 
   const onSubmit = async (data: NavigationFormData) => {
     setIsSaving(true);
@@ -79,7 +203,6 @@ const NavigationManagement: React.FC = () => {
     setEditingItem(item);
     setValue('name', item.name);
     setValue('href', item.href);
-    setValue('order', item.order);
     setValue('isActive', item.isActive);
     setValue('isExternal', item.isExternal || false);
     setShowAddForm(true);
@@ -107,7 +230,6 @@ const NavigationManagement: React.FC = () => {
     reset();
     setEditingItem(null);
     setShowAddForm(true);
-    setValue('order', navigationItems.length + 1);
   };
 
   return (
@@ -178,41 +300,24 @@ const NavigationManagement: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label htmlFor="order" className="block text-sm font-medium text-gray-700 mb-1">
-                      Sıra Numarası
-                    </label>
+                <div className="flex items-center space-x-6">
+                  <label className="flex items-center">
                     <input
-                      {...register('order')}
-                      type="number"
-                      min="1"
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      {...register('isActive')}
+                      type="checkbox"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    {errors.order && (
-                      <p className="mt-1 text-sm text-red-600">{errors.order.message}</p>
-                    )}
-                  </div>
+                    <span className="ml-2 text-sm text-gray-700">Aktif</span>
+                  </label>
 
-                  <div className="flex items-center space-x-4">
-                    <label className="flex items-center">
-                      <input
-                        {...register('isActive')}
-                        type="checkbox"
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">Aktif</span>
-                    </label>
-
-                    <label className="flex items-center">
-                      <input
-                        {...register('isExternal')}
-                        type="checkbox"
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">Dış Link</span>
-                    </label>
-                  </div>
+                  <label className="flex items-center">
+                    <input
+                      {...register('isExternal')}
+                      type="checkbox"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Dış Link</span>
+                  </label>
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-4">
@@ -243,58 +348,34 @@ const NavigationManagement: React.FC = () => {
             </Button>
           </div>
 
-          <div className="space-y-3">
-            {navigationItems
-              .sort((a, b) => a.order - b.order)
-              .map((item) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border"
-                >
-                  <div className="flex items-center space-x-4">
-                    <GripVertical className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-900">{item.name}</span>
-                        {!item.isActive && (
-                          <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
-                            Pasif
-                          </span>
-                        )}
-                        {item.isExternal && (
-                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                            Dış Link
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500">{item.href}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-500">Sıra: {item.order}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(item)}
-                      className="text-blue-600 hover:text-blue-700"
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={navigationItems.map(item => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {navigationItems
+                  .sort((a, b) => (a.order_position || a.order || 0) - (b.order_position || b.order || 0))
+                  .map((item) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
                     >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(item.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </motion.div>
-              ))}
-          </div>
+                      <SortableItem
+                        item={item}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                      />
+                    </motion.div>
+                  ))}
+              </div>
+            </SortableContext>
+          </DndContext>
 
           {navigationItems.length === 0 && (
             <div className="text-center py-8">

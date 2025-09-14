@@ -139,23 +139,6 @@ const Hero: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1 }}
-              className="absolute -bottom-8 -left-8 bg-white p-6 rounded-2xl shadow-xl border border-slate-200"
-            >
-              <div className="flex items-center">
-                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mr-4">
-                  <Award className="w-8 h-8 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 text-lg">ISO Sertifikalı</h3>
-                  <p className="text-sm text-slate-600">Kalite standartlarımız</p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.2 }}
               className="absolute -top-8 -right-8 bg-slate-800 text-white p-6 rounded-2xl shadow-xl"
             >
@@ -175,10 +158,6 @@ const Hero: React.FC = () => {
           className="mt-24"
         >
           <div className="bg-slate-800 rounded-3xl p-12 shadow-2xl">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-4">Güvenilir Ortağınız</h2>
-              <p className="text-slate-300 text-lg">Sayılarla ifade edilen başarı hikayemiz</p>
-            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
               {stats.map((stat, index) => {

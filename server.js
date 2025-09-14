@@ -60,11 +60,11 @@ app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', 
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; " +
+    "script-src-elem 'self' 'unsafe-inline' https://static.cloudflareinsights.com; " +
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: blob:; " +
     "font-src 'self' data:; " +
-    "connect-src 'self' http://localhost:3030 https://letsshine.com.tr https://cloudflareinsights.com; " +
-    "frame-ancestors 'none';"
+    "connect-src 'self' http://localhost:3030 https://letsshine.com.tr https://cloudflareinsights.com;"
   );
   
   next();
@@ -629,9 +629,29 @@ app.post('/api/services', authenticateAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Gerekli alanlar eksik' });
     }
     
+    // Parse features if it's a string
+    let parsedFeatures = features || [];
+    if (typeof features === 'string') {
+      try {
+        parsedFeatures = JSON.parse(features);
+      } catch (e) {
+        parsedFeatures = [];
+      }
+    } else if (Array.isArray(features)) {
+      parsedFeatures = features;
+    } else if (features && typeof features === 'object') {
+      // If it's an object, try to extract array values
+      parsedFeatures = Object.values(features).filter(v => typeof v === 'string');
+    }
+    
+    // Ensure it's always an array
+    if (!Array.isArray(parsedFeatures)) {
+      parsedFeatures = [];
+    }
+    
     const result = await pool.query(
       'INSERT INTO services (title, description, content, features, icon, slug, order_position, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [title, description, content, features || [], icon, slug, order || 0, isActive !== undefined ? isActive : true]
+      [title, description, content, JSON.stringify(parsedFeatures), icon, slug, order || 0, isActive !== undefined ? isActive : true]
     );
     
     const service = result.rows[0];
@@ -665,14 +685,39 @@ app.put('/api/services/:id', authenticateAdmin, async (req, res) => {
     const { id } = req.params;
     const { title, description, content, features, icon, slug, order, isActive } = req.body;
     
+    console.log('PUT /api/services/:id - Request body:', JSON.stringify(req.body, null, 2));
+    console.log('Features type:', typeof features, 'Features value:', features);
+    
     // Validation
     if (!title || !description) {
       return res.status(400).json({ error: 'Gerekli alanlar eksik' });
     }
     
+    // Parse features if it's a string
+    let parsedFeatures = features || [];
+    if (typeof features === 'string') {
+      try {
+        parsedFeatures = JSON.parse(features);
+        console.log('Parsed features:', parsedFeatures);
+      } catch (e) {
+        console.error('JSON parse error:', e);
+        parsedFeatures = [];
+      }
+    } else if (Array.isArray(features)) {
+      parsedFeatures = features;
+    } else if (features && typeof features === 'object') {
+      // If it's an object, try to extract array values
+      parsedFeatures = Object.values(features).filter(v => typeof v === 'string');
+    }
+    
+    // Ensure it's always an array
+    if (!Array.isArray(parsedFeatures)) {
+      parsedFeatures = [];
+    }
+    
     const result = await pool.query(
       'UPDATE services SET title = $1, description = $2, content = $3, features = $4, icon = $5, slug = $6, order_position = $7, is_active = $8, updated_at = NOW() WHERE id = $9 RETURNING *',
-      [title, description, content, features || [], icon, slug, order || 0, isActive !== undefined ? isActive : true, id]
+      [title, description, content, JSON.stringify(parsedFeatures), icon, slug, order || 0, isActive !== undefined ? isActive : true, id]
     );
     
     if (result.rows.length === 0) {
@@ -1150,6 +1195,84 @@ app.delete('/api/admin/messages/:id', authenticateAdmin, async (req, res) => {
     res.status(204).send();
   } catch (error) {
     console.error('Error deleting contact message:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Navigation API endpoints
+app.get('/api/navigation', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM navigation WHERE is_active = true ORDER BY order_position ASC'
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching navigation items:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/navigation', authenticateAdmin, async (req, res) => {
+  try {
+    const { name, href, order_position, is_active } = req.body;
+    
+    if (!name || !href) {
+      return res.status(400).json({ error: 'Name and href are required' });
+    }
+    
+    const result = await pool.query(
+      'INSERT INTO navigation (name, href, order_position, is_active) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, href, order_position || 0, is_active !== undefined ? is_active : true]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating navigation item:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/navigation/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, href, order_position, is_active } = req.body;
+    
+    if (!name || !href) {
+      return res.status(400).json({ error: 'Name and href are required' });
+    }
+    
+    const result = await pool.query(
+      'UPDATE navigation SET name = $1, href = $2, order_position = $3, is_active = $4, updated_at = NOW() WHERE id = $5 RETURNING *',
+      [name, href, order_position || 0, is_active !== undefined ? is_active : true, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Navigation item not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating navigation item:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/navigation/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(
+      'DELETE FROM navigation WHERE id = $1 RETURNING *',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Navigation item not found' });
+    }
+    
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting navigation item:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
