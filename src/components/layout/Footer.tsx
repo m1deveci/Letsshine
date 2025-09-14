@@ -22,9 +22,17 @@ const Footer: React.FC = () => {
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center mr-2">
-                <span className="text-white font-bold text-sm">LS</span>
-              </div>
+              {settings.logo ? (
+                <img 
+                  src={settings.logo} 
+                  alt="Let's Shine Logo" 
+                  className="w-8 h-8 object-contain mr-2"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center mr-2">
+                  <span className="text-white font-bold text-sm">LS</span>
+                </div>
+              )}
               <h3 className="text-lg font-bold">Let's Shine</h3>
             </div>
             <p className="text-gray-300 text-sm mb-4">
