@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Linkedin, Users, X, Briefcase, Award, Crown, UserCheck } from 'lucide-react';
+import { Mail, Linkedin, Users, X, Briefcase, Award, Crown, UserCheck, Star } from 'lucide-react';
 import { TeamMember } from '../../types';
 import Card from '../ui/Card';
 
@@ -139,12 +139,13 @@ const Team: React.FC = () => {
                   {member.expertise.map((skill, skillIndex) => (
                     <span
                       key={skillIndex}
-                      className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
                         isFounder 
                           ? 'bg-yellow-50 text-yellow-700' 
                           : 'bg-blue-50 text-blue-700'
                       }`}
                     >
+                      <Star className="w-3 h-3 text-yellow-500 fill-current animate-pulse" />
                       {skill}
                     </span>
                   ))}
@@ -390,8 +391,9 @@ const Team: React.FC = () => {
                       {selectedMember.expertise.map((skill, index) => (
                         <span
                           key={index}
-                          className="px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-200"
+                          className="px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-200 flex items-center gap-2"
                         >
+                          <Star className="w-4 h-4 text-yellow-500 fill-current animate-pulse" />
                           {skill}
                         </span>
                       ))}

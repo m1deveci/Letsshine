@@ -30,8 +30,8 @@ const Hero: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/5 via-transparent to-blue-900/5"></div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8 lg:pt-6 lg:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
           {/* Content */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -109,15 +109,15 @@ const Hero: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="relative"
           >
-            <div className="relative bg-gradient-to-br from-slate-100 via-white to-slate-50 rounded-3xl p-12 shadow-2xl border border-slate-200">
+            <div className="relative bg-gradient-to-br from-slate-100 via-white to-slate-50 rounded-3xl p-4 shadow-2xl border border-slate-200">
               <img
                 src={heroContent?.heroImage || "/uploads/logo1.png"}
                 alt="İnsan Kaynakları Danışmanlığı"
-                className="w-full h-96 lg:h-[500px] object-contain"
+                className="w-full h-full object-contain object-center rounded-2xl"
               />
 
               {/* Professional overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-800/5 via-transparent to-slate-800/5 rounded-3xl"></div>
+              <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-slate-800/10 via-slate-800/5 to-transparent rounded-t-3xl"></div>
 
               {/* Corner accent */}
               <div className="absolute top-6 right-6 w-16 h-16 bg-blue-600 rounded-full opacity-10"></div>
