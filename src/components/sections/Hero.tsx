@@ -19,13 +19,11 @@ const Hero: React.FC = () => {
 
   const stats = heroContent?.stats || [
     { number: '30+', label: 'Başarılı Proje', icon: TrendingUp },
-    { number: '25+', label: 'Yıllık Deneyim', icon: Award },
     { number: '210+', label: 'Mutlu Müşteri', icon: Users }
   ];
 
   const iconMap = {
     'Başarılı Proje': TrendingUp,
-    'Yıllık Deneyim': Award,
     'Mutlu Müşteri': Users
   };
 
@@ -62,7 +60,7 @@ const Hero: React.FC = () => {
               </h1>
 
               <p className="text-xl text-slate-700 leading-relaxed max-w-2xl">
-                {heroContent?.subtitle || '25+ yıllık deneyimimiz ve uzman ekibimizle, organizasyonunuzun insan kaynakları potansiyelini maksimuma çıkarıyoruz.'}
+                {heroContent?.subtitle || 'Uzman ekibimizle, organizasyonunuzun insan kaynakları potansiyelini maksimuma çıkarıyoruz.'}
               </p>
 
               {heroContent?.description && (
@@ -159,7 +157,7 @@ const Hero: React.FC = () => {
         >
           <div className="bg-slate-800 rounded-3xl p-12 shadow-2xl">
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               {stats.map((stat, index) => {
                 const IconComponent = iconMap[stat.label as keyof typeof iconMap] || TrendingUp;
                 return (

@@ -249,7 +249,7 @@ const HeroManagement: React.FC = () => {
                 id="subtitle"
                 rows={3}
                 className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="25+ yıllık deneyimimiz ve uzman ekibimizle..."
+                placeholder="Uzman ekibimizle..."
               />
               {errors.subtitle && (
                 <p className="mt-1 text-sm text-red-600">{errors.subtitle.message}</p>

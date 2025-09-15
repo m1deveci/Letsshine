@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Save, Settings, Mail, Globe, Phone, MapPin, Image, Upload } from 'lucide-react';
+import { Save, Settings, Mail, Globe, Phone, MapPin, Image, Upload, Server, Users, Plus, Edit3, Trash2, Key, X, RefreshCw } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { SiteSettings } from '../../types';
@@ -35,6 +35,17 @@ const SettingsPage: React.FC = () => {
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [faviconPreview, setFaviconPreview] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [emailAccounts, setEmailAccounts] = useState<any[]>([]);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [editingEmail, setEditingEmail] = useState<any>(null);
+  const [emailFormData, setEmailFormData] = useState({
+    username: '',
+    password: '',
+    quota: 1000,
+    usedMb: 0,
+    isActive: true
+  });
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { settings, updateSettings } = useApp();
   const { token } = useAuth();
@@ -278,15 +289,208 @@ const SettingsPage: React.FC = () => {
     link.href = faviconUrl;
   };
 
+  // E-posta hesapları yönetimi fonksiyonları
+  const fetchEmailAccounts = async () => {
+    try {
+      const response = await fetch('/api/admin/email-accounts', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEmailAccounts(data);
+      }
+    } catch (error) {
+      console.error('E-posta hesapları yüklenirken hata:', error);
+    }
+  };
+
+  const handleEmailSave = async () => {
+    // Frontend validasyonu
+    if (!emailFormData.username.trim()) {
+      setSuccessMessage('Kullanıcı adı gereklidir!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      return;
+    }
+
+    // Kullanıcı adı format kontrolü
+    const usernameRegex = /^[a-zA-Z0-9._-]+$/;
+    if (!usernameRegex.test(emailFormData.username)) {
+      setSuccessMessage('Kullanıcı adı sadece harf, rakam, nokta, tire ve alt çizgi içerebilir!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      return;
+    }
+
+    // Kullanıcı adı uzunluk kontrolü
+    if (emailFormData.username.length < 2) {
+      setSuccessMessage('Kullanıcı adı en az 2 karakter olmalıdır!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      return;
+    }
+
+    // Tam e-posta adresini oluştur
+    const fullEmail = `${emailFormData.username}@letsshine.com.tr`;
+
+    // Yeni hesap için şifre kontrolü
+    if (!editingEmail && !emailFormData.password.trim()) {
+      setSuccessMessage('Şifre gereklidir!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      return;
+    }
+
+    // Şifre uzunluk kontrolü
+    if (emailFormData.password && emailFormData.password.length < 6) {
+      setSuccessMessage('Şifre en az 6 karakter olmalıdır!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      return;
+    }
+
+    // Kota kontrolü
+    if (emailFormData.quota < 100 || emailFormData.quota > 10000) {
+      setSuccessMessage('Kota 100 MB ile 10000 MB arasında olmalıdır!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      return;
+    }
+
+    try {
+      const url = editingEmail
+        ? `/api/admin/email-accounts/${editingEmail.id}`
+        : '/api/admin/email-accounts';
+
+      const method = editingEmail ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          email: fullEmail,
+          password: emailFormData.password,
+          quota: emailFormData.quota,
+          usedMb: emailFormData.usedMb,
+          isActive: emailFormData.isActive
+        }),
+      });
+
+      if (response.ok) {
+        setSuccessMessage(editingEmail ? 'E-posta hesabı güncellendi!' : 'E-posta hesabı oluşturuldu!');
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+        setShowEmailModal(false);
+        setEditingEmail(null);
+        setEmailFormData({ username: '', password: '', quota: 1000, usedMb: 0, isActive: true });
+        fetchEmailAccounts();
+      } else {
+        const errorData = await response.json();
+        setSuccessMessage(errorData.error || 'E-posta hesabı kaydedilemedi!');
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+      }
+    } catch (error) {
+      console.error('E-posta hesabı kaydetme hatası:', error);
+      setSuccessMessage('E-posta hesabı kaydedilirken hata oluştu!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    }
+  };
+
+  const handleEmailDelete = async (emailId: string) => {
+    if (!confirm('E-posta hesabını silmek istediğinizden emin misiniz?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/email-accounts/${emailId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setSuccessMessage('E-posta hesabı silindi!');
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+        fetchEmailAccounts();
+      }
+    } catch (error) {
+      console.error('E-posta hesabı silme hatası:', error);
+    }
+  };
+
+  const openEmailModal = (email = null) => {
+    if (email) {
+      setEditingEmail(email);
+      // E-posta adresinden kullanıcı adını çıkar
+      const username = email.email.split('@')[0];
+      setEmailFormData({
+        username: username,
+        password: '',
+        quota: email.quota,
+        usedMb: email.usedMb || 0,
+        isActive: email.isActive
+      });
+    } else {
+      setEditingEmail(null);
+      setEmailFormData({ username: '', password: '', quota: 1000, usedMb: 0, isActive: true });
+    }
+    setShowEmailModal(true);
+  };
+
+  // Kullanım verilerini senkronize et
+  const handleSyncUsage = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch('/api/admin/email-accounts/sync-usage', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuccessMessage(`Kullanım verileri güncellendi! (${data.duration})`);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+        fetchEmailAccounts();
+      } else {
+        throw new Error('Senkronizasyon başarısız');
+      }
+    } catch (error) {
+      console.error('Senkronizasyon hatası:', error);
+      setSuccessMessage('Kullanım verileri güncellenirken hata oluştu!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // E-posta hesaplarını yükle
+  React.useEffect(() => {
+    if (activeTab === 'email-accounts' && token) {
+      fetchEmailAccounts();
+    }
+  }, [activeTab, token]);
+
   const tabs = [
     { id: 'general', name: 'Genel Ayarlar', icon: Settings },
     { id: 'branding', name: 'Logo ve Favicon', icon: Image },
     { id: 'contact', name: 'İletişim', icon: Phone },
-    { id: 'email', name: 'E-posta Ayarları', icon: Mail }
+    { id: 'email', name: 'E-posta Ayarları', icon: Mail },
+    { id: 'email-accounts', name: 'E-posta Hesapları', icon: Server }
   ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -324,7 +528,7 @@ const SettingsPage: React.FC = () => {
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Sidebar */}
         <div className="lg:col-span-1">
           <Card className="p-4">
@@ -348,7 +552,7 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* Content */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4">
           <form onSubmit={handleSubmit(onSubmit as any)}>
             <Card>
               {activeTab === 'general' && (
@@ -622,6 +826,127 @@ const SettingsPage: React.FC = () => {
                 </motion.div>
               )}
 
+              {activeTab === 'email-accounts' && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-6"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900 mb-2 flex items-center">
+                        <Server className="w-6 h-6 mr-2" />
+                        E-posta Hesapları Yönetimi
+                      </h2>
+                      <p className="text-sm text-gray-600">
+                        E-posta sunucunuzdaki hesapları oluşturun, düzenleyin ve yönetin
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={handleSyncUsage}
+                        isLoading={isSyncing}
+                        leftIcon={<RefreshCw className="w-4 h-4" />}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {isSyncing ? 'Senkronize Ediliyor...' : 'Kullanım Verilerini Güncelle'}
+                      </Button>
+                      <Button
+                        onClick={() => openEmailModal()}
+                        leftIcon={<Plus className="w-4 h-4" />}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Yeni Hesap
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* E-posta hesapları listesi */}
+                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                      <div className="grid grid-cols-6 gap-4 text-sm font-medium text-gray-700">
+                        <div className="col-span-2">E-posta Adresi</div>
+                        <div>Kota (MB)</div>
+                        <div>Kullanım</div>
+                        <div>Durum</div>
+                        <div>Oluşturma Tarihi</div>
+                        <div>İşlemler</div>
+                      </div>
+                    </div>
+                    <div className="divide-y divide-gray-200">
+                      {emailAccounts.length === 0 ? (
+                        <div className="px-6 py-8 text-center text-gray-500">
+                          <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                          <p>Henüz e-posta hesabı bulunmuyor</p>
+                          <p className="text-sm">Yeni hesap oluşturmak için yukarıdaki butonu kullanın</p>
+                        </div>
+                      ) : (
+                        emailAccounts.map((account) => (
+                          <div key={account.id} className="px-6 py-4 hover:bg-gray-50">
+                            <div className="grid grid-cols-6 gap-4 items-center">
+                              <div className="col-span-2 flex items-center">
+                                <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                                <span className="font-medium text-sm">{account.email}</span>
+                              </div>
+                              <div className="text-sm">{account.quota} MB</div>
+                              <div className="text-sm">
+                                {(() => {
+                                  const usedMB = account.usedMb || 0;
+                                  const usagePercent = account.quota > 0 ? (usedMB / account.quota) * 100 : 0;
+                                  const colorClass = usagePercent > 80 ? 'bg-red-600' : usagePercent > 60 ? 'bg-yellow-600' : 'bg-green-600';
+
+                                  return (
+                                    <>
+                                      <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div
+                                          className={`h-2 rounded-full ${colorClass}`}
+                                          style={{ width: `${Math.min(usagePercent, 100)}%` }}
+                                        ></div>
+                                      </div>
+                                      <span className="text-xs text-gray-500 mt-1 block">
+                                        {usedMB} MB / {account.quota} MB kullanılan
+                                      </span>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                              <div>
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  account.isActive
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {account.isActive ? 'Aktif' : 'Pasif'}
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {new Date(account.createdAt).toLocaleDateString('tr-TR')}
+                              </div>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => openEmailModal(account)}
+                                  className="p-1 text-blue-600 hover:text-blue-800 rounded"
+                                  title="Düzenle"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleEmailDelete(account.id)}
+                                  className="p-1 text-red-600 hover:text-red-800 rounded"
+                                  title="Sil"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Save Button */}
               <div className="flex justify-end pt-6 mt-6 border-t border-gray-200">
                 <Button
@@ -637,6 +962,137 @@ const SettingsPage: React.FC = () => {
           </form>
         </div>
       </div>
+
+      {/* E-posta Hesabı Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-lg p-6 w-full max-w-md mx-4"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingEmail ? 'E-posta Hesabını Düzenle' : 'Yeni E-posta Hesabı'}
+              </h3>
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  E-posta Adresi
+                </label>
+                <div className="flex items-center">
+                  <input
+                    type="text"
+                    value={emailFormData.username}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+                      setEmailFormData(prev => ({ ...prev, username: value }));
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="kullaniciadi"
+                    disabled={!!editingEmail}
+                    maxLength="20"
+                  />
+                  <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-gray-600 text-sm">
+                    @letsshine.com.tr
+                  </span>
+                </div>
+                <div className="flex justify-between mt-1">
+                  {emailFormData.username && (
+                    <p className="text-xs text-gray-500">
+                      Tam adres: <span className="font-mono">{emailFormData.username}@letsshine.com.tr</span>
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400">
+                    {emailFormData.username.length}/20 karakter
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Şifre {editingEmail && <span className="text-xs text-gray-500">(boş bırakılırsa değişmez)</span>}
+                </label>
+                <input
+                  type="password"
+                  value={emailFormData.password}
+                  onChange={(e) => setEmailFormData(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={editingEmail ? "Yeni şifre (opsiyonel)" : "Şifre"}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kota (MB)
+                  </label>
+                  <input
+                    type="number"
+                    value={emailFormData.quota}
+                    onChange={(e) => setEmailFormData(prev => ({ ...prev, quota: parseInt(e.target.value) || 1000 }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    min="100"
+                    max="10000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kullanılan (MB)
+                  </label>
+                  <input
+                    type="number"
+                    value={emailFormData.usedMb}
+                    onChange={(e) => setEmailFormData(prev => ({ ...prev, usedMb: parseInt(e.target.value) || 0 }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    min="0"
+                    max={emailFormData.quota}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={emailFormData.isActive}
+                  onChange={(e) => setEmailFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="isActive" className="ml-2 text-sm font-medium text-gray-700">
+                  Aktif
+                </label>
+              </div>
+            </div>
+
+            <div className="flex space-x-3 mt-6">
+              <Button
+                onClick={() => setShowEmailModal(false)}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700"
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={handleEmailSave}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                leftIcon={<Save className="w-4 h-4" />}
+              >
+                {editingEmail ? 'Güncelle' : 'Oluştur'}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

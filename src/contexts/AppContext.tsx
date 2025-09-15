@@ -56,7 +56,7 @@ export const useApp = () => {
 const defaultHeroContent: HeroContent = {
   id: '1',
   title: 'İnsan Odaklı İK Çözümleri ile Geleceği Şekillendirin',
-  subtitle: '25+ yıllık deneyimimiz ve uzman ekibimizle, organizasyonunuzun insan kaynakları potansiyelini maksimuma çıkarıyoruz.',
+  subtitle: 'Uzman ekibimizle, organizasyonunuzun insan kaynakları potansiyelini maksimuma çıkarıyoruz.',
   description: 'Stratejik danışmanlık, koçluk ve psikolojik destek hizmetlerimizle, kurumsal eğitimlerimizle yanınızdayız.',
   features: [
     'Stratejik İnsan Kaynakları Danışmanlığı',
@@ -67,7 +67,6 @@ const defaultHeroContent: HeroContent = {
   ],
   stats: [
     { number: '30+', label: 'Başarılı Proje' },
-    { number: '25+', label: 'Yıllık Deneyim' },
     { number: '210+', label: 'Mutlu Müşteri' }
   ],
   heroImage: '/uploads/logo1.png',

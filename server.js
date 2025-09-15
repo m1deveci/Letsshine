@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -302,10 +303,66 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
+// Function to get real email usage from mail server
+const getEmailUsage = (email) => {
+  try {
+    const username = email.split('@')[0];
+    let totalSize = 0;
+
+    // Check /var/mail/ for INBOX
+    try {
+      const inboxPath = `/var/mail/${username}`;
+      if (fs.existsSync(inboxPath)) {
+        const stats = fs.statSync(inboxPath);
+        totalSize += stats.size;
+      }
+    } catch (error) {
+      // Inbox doesn't exist or no permission
+    }
+
+    // Check home directory mail folders (~/mail)
+    try {
+      const homeMailPath = `/home/${username}/mail`;
+      if (fs.existsSync(homeMailPath)) {
+        const output = execSync(`du -sb "${homeMailPath}" 2>/dev/null || echo "0"`, { encoding: 'utf8' });
+        const dirSize = parseInt(output.split('\t')[0]) || 0;
+        totalSize += dirSize;
+      }
+    } catch (error) {
+      // Home mail directory doesn't exist or no permission
+    }
+
+    // Convert bytes to MB
+    return Math.round(totalSize / (1024 * 1024));
+  } catch (error) {
+    console.error(`Error calculating email usage for ${email}:`, error);
+    return 0;
+  }
+};
+
+// Function to update all email usage data
+const updateAllEmailUsage = async () => {
+  try {
+    const result = await pool.query('SELECT id, email FROM email_accounts');
+
+    for (const account of result.rows) {
+      const realUsage = getEmailUsage(account.email);
+      await pool.query(
+        'UPDATE email_accounts SET used_mb = $1 WHERE id = $2',
+        [realUsage, account.id]
+      );
+    }
+
+    console.log('Email usage data updated for all accounts');
+  } catch (error) {
+    console.error('Error updating email usage data:', error);
+  }
+};
+
 // Admin authentication middleware
 const authenticateAdmin = (req, res, next) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
-  
+
   // Simple token validation - in production use JWT
   if (token === process.env.ADMIN_TOKEN || token === 'demo-token') {
     req.user = { id: '1', email: process.env.ADMIN_EMAIL || 'admin@letsshine.com', role: 'admin' };
@@ -1312,6 +1369,194 @@ app.delete('/api/navigation/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Email Accounts Management API endpoints
+app.get('/api/admin/email-accounts', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, email, quota, used_mb, is_active, created_at, updated_at
+      FROM email_accounts
+      ORDER BY created_at DESC
+    `);
+
+    res.json(result.rows.map(row => ({
+      id: row.id.toString(),
+      email: row.email,
+      quota: row.quota,
+      usedMb: row.used_mb || 0,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    })));
+  } catch (error) {
+    console.error('Error fetching email accounts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/admin/email-accounts', authenticateAdmin, async (req, res) => {
+  try {
+    const { email, password, quota, isActive } = req.body;
+
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({ error: 'E-posta adresi ve şifre gereklidir' });
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Geçerli bir e-posta adresi giriniz' });
+    }
+
+    // Check if email already exists
+    const existingEmail = await pool.query('SELECT id FROM email_accounts WHERE email = $1', [email]);
+    if (existingEmail.rows.length > 0) {
+      return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
+    }
+
+    // Hash password (in production, use proper password hashing)
+    const hashedPassword = password; // Simplified for demo
+
+    const result = await pool.query(
+      'INSERT INTO email_accounts (email, password_hash, quota, used_mb, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [email, hashedPassword, quota || 1000, 0, isActive !== undefined ? isActive : true]
+    );
+
+    const account = result.rows[0];
+    res.status(201).json({
+      id: account.id.toString(),
+      email: account.email,
+      quota: account.quota,
+      usedMb: account.used_mb || 0,
+      isActive: account.is_active,
+      createdAt: account.created_at,
+      updatedAt: account.updated_at
+    });
+  } catch (error) {
+    console.error('Error creating email account:', error);
+    if (error.code === '23505') { // Unique constraint violation
+      res.status(400).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+app.put('/api/admin/email-accounts/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password, quota, usedMb, isActive } = req.body;
+
+    // Build dynamic update query
+    const updateFields = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (password) {
+      updateFields.push(`password_hash = $${paramCount}`);
+      values.push(password); // In production, hash the password
+      paramCount++;
+    }
+
+    if (quota !== undefined) {
+      updateFields.push(`quota = $${paramCount}`);
+      values.push(quota);
+      paramCount++;
+    }
+
+    if (usedMb !== undefined) {
+      updateFields.push(`used_mb = $${paramCount}`);
+      values.push(usedMb);
+      paramCount++;
+    }
+
+    if (isActive !== undefined) {
+      updateFields.push(`is_active = $${paramCount}`);
+      values.push(isActive);
+      paramCount++;
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: 'Güncellenecek alan belirtilmedi' });
+    }
+
+    updateFields.push(`updated_at = NOW()`);
+    values.push(id);
+
+    const query = `UPDATE email_accounts SET ${updateFields.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'E-posta hesabı bulunamadı' });
+    }
+
+    const account = result.rows[0];
+    res.json({
+      id: account.id.toString(),
+      email: account.email,
+      quota: account.quota,
+      usedMb: account.used_mb || 0,
+      isActive: account.is_active,
+      createdAt: account.created_at,
+      updatedAt: account.updated_at
+    });
+  } catch (error) {
+    console.error('Error updating email account:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/admin/email-accounts/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query('DELETE FROM email_accounts WHERE id = $1 RETURNING *', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'E-posta hesabı bulunamadı' });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting email account:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Endpoint to manually update email usage data
+app.post('/api/admin/email-accounts/sync-usage', authenticateAdmin, async (req, res) => {
+  try {
+    const startTime = Date.now();
+    await updateAllEmailUsage();
+    const endTime = Date.now();
+
+    // Return updated data
+    const result = await pool.query(`
+      SELECT id, email, quota, used_mb, is_active, created_at, updated_at
+      FROM email_accounts
+      ORDER BY created_at DESC
+    `);
+
+    res.json({
+      message: 'Email usage data synchronized successfully',
+      duration: `${endTime - startTime}ms`,
+      accounts: result.rows.map(row => ({
+        id: row.id.toString(),
+        email: row.email,
+        quota: row.quota,
+        usedMb: row.used_mb || 0,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('Error syncing email usage:', error);
+    res.status(500).json({ error: 'Failed to sync email usage data' });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -1338,6 +1583,18 @@ app.get('*', (req, res) => {
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`Server running on http://127.0.0.1:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  // Update email usage data every 15 minutes
+  setInterval(async () => {
+    console.log('Running scheduled email usage update...');
+    await updateAllEmailUsage();
+  }, 15 * 60 * 1000); // 15 minutes
+
+  // Initial update after server start
+  setTimeout(async () => {
+    console.log('Running initial email usage update...');
+    await updateAllEmailUsage();
+  }, 10000); // 10 seconds after server start
 });
 
 // Graceful shutdown
