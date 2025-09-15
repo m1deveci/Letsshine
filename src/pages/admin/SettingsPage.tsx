@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Save, Settings, Mail, Globe, Phone, MapPin, Image, Upload, Server, Users, Plus, Edit3, Trash2, Key, X, RefreshCw } from 'lucide-react';
+import { Save, Settings, Mail, Globe, Phone, MapPin, Image, Upload, Server, Users, Plus, Edit3, Trash2, Key, X, RefreshCw, Linkedin, Twitter, Instagram, Facebook } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { SiteSettings } from '../../types';
@@ -18,6 +18,10 @@ const settingsSchema = z.object({
   phone: z.string().min(1, 'Telefon numarası gereklidir'),
   email: z.string().email('Geçerli bir e-posta adresi giriniz'),
   address: z.string().min(1, 'Adres gereklidir'),
+  linkedin: z.string().url('Geçerli bir LinkedIn URL\'si giriniz').optional().or(z.literal('')),
+  twitter: z.string().url('Geçerli bir Twitter URL\'si giriniz').optional().or(z.literal('')),
+  instagram: z.string().url('Geçerli bir Instagram URL\'si giriniz').optional().or(z.literal('')),
+  facebook: z.string().url('Geçerli bir Facebook URL\'si giriniz').optional().or(z.literal('')),
   smtpHost: z.string().optional(),
   smtpPort: z.coerce.number().optional(),
   smtpUsername: z.string().optional(),
@@ -69,6 +73,10 @@ const SettingsPage: React.FC = () => {
       phone: settings.phone || '',
       email: settings.email || '',
       address: settings.address || '',
+      linkedin: settings.socialMedia?.linkedin || '',
+      twitter: settings.socialMedia?.twitter || '',
+      instagram: settings.socialMedia?.instagram || '',
+      facebook: settings.socialMedia?.facebook || '',
       smtpHost: settings.smtp?.host || '',
       smtpPort: settings.smtp?.port || 587,
       smtpUsername: settings.smtp?.username || '',
@@ -91,6 +99,10 @@ const SettingsPage: React.FC = () => {
     setValue('phone', settings.phone || '');
     setValue('email', settings.email || '');
     setValue('address', settings.address || '');
+    setValue('linkedin', settings.socialMedia?.linkedin || '');
+    setValue('twitter', settings.socialMedia?.twitter || '');
+    setValue('instagram', settings.socialMedia?.instagram || '');
+    setValue('facebook', settings.socialMedia?.facebook || '');
     setValue('smtpHost', settings.smtp?.host || '');
     setValue('smtpPort', settings.smtp?.port || 587);
     setValue('smtpUsername', settings.smtp?.username || '');
@@ -111,6 +123,13 @@ const SettingsPage: React.FC = () => {
         phone: data.phone,
         email: data.email,
         address: data.address,
+        socialMedia: {
+          ...settings.socialMedia, // Mevcut sosyal medya ayarlarını koru
+          linkedin: data.linkedin || '',
+          twitter: data.twitter || '',
+          instagram: data.instagram || '',
+          facebook: data.facebook || ''
+        },
         smtp: {
           ...settings.smtp, // Mevcut SMTP ayarlarını koru
           host: data.smtpHost || '',
@@ -548,6 +567,7 @@ const SettingsPage: React.FC = () => {
     { id: 'general', name: 'Genel Ayarlar', icon: Settings },
     { id: 'branding', name: 'Logo ve Favicon', icon: Image },
     { id: 'contact', name: 'İletişim', icon: Phone },
+    { id: 'social', name: 'Sosyal Medya', icon: Users },
     { id: 'email', name: 'E-posta Ayarları', icon: Mail },
     { id: 'email-accounts', name: 'E-posta Hesapları', icon: Server }
   ];
@@ -829,6 +849,60 @@ const SettingsPage: React.FC = () => {
                     {...register('address')}
                     error={errors.address?.message}
                     leftIcon={<MapPin className="w-4 h-4" />}
+                  />
+                </motion.div>
+              )}
+
+              {activeTab === 'social' && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-6"
+                >
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <Users className="w-6 h-6 mr-2" />
+                      Sosyal Medya Hesapları
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Sosyal medya hesaplarınızın URL'lerini girin. Bu bilgiler footer'da görüntülenecektir.
+                    </p>
+                  </div>
+
+                  <Input
+                    label="LinkedIn URL"
+                    type="url"
+                    placeholder="https://linkedin.com/company/letsshine"
+                    {...register('linkedin')}
+                    error={errors.linkedin?.message}
+                    leftIcon={<Linkedin className="w-4 h-4" />}
+                  />
+
+                  <Input
+                    label="Twitter URL"
+                    type="url"
+                    placeholder="https://twitter.com/letsshine"
+                    {...register('twitter')}
+                    error={errors.twitter?.message}
+                    leftIcon={<Twitter className="w-4 h-4" />}
+                  />
+
+                  <Input
+                    label="Instagram URL"
+                    type="url"
+                    placeholder="https://instagram.com/letsshine"
+                    {...register('instagram')}
+                    error={errors.instagram?.message}
+                    leftIcon={<Instagram className="w-4 h-4" />}
+                  />
+
+                  <Input
+                    label="Facebook URL"
+                    type="url"
+                    placeholder="https://facebook.com/letsshine"
+                    {...register('facebook')}
+                    error={errors.facebook?.message}
+                    leftIcon={<Facebook className="w-4 h-4" />}
                   />
                 </motion.div>
               )}

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ExternalLink, Users, UserSearch, Target, GraduationCap, Heart, MessageCircle, DollarSign, Info } from 'lucide-react'
+import { ArrowRight, ExternalLink, Users, UserSearch, Target, GraduationCap, Heart, MessageCircle, DollarSign, Info, Star } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import Tooltip from '../ui/Tooltip'
 
@@ -49,7 +49,12 @@ export const ServicesSection: React.FC = () => {
                 className="animate-slide-up"
                 style={{ animationDelay: `${index * 0.15}s` }}
               >
-                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
+                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group relative overflow-hidden">
+                  {/* Card accent - Star */}
+                  <div className="absolute top-4 right-4 w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg animate-pulse">
+                    <Star className="w-6 h-6 text-white fill-current" />
+                  </div>
+                  
                   <Link to={`/hizmet/${service.slug}`} className="block h-full">
                     <div className="flex flex-col h-full">
                       <div className="flex items-center justify-between mb-6">

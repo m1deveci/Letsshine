@@ -70,15 +70,11 @@ const About: React.FC = () => {
   ];
 
   const slogans = [
-    "İnsana dokun, geleceği dönüştür.",
-    "Her yolculuk bir keşif, biz yanınızdayız.",
-    "Güvenle, samimiyetle, birlikte büyüyoruz.",
-    "Hızlı düşün, doğru çöz, birlikte kazan.",
-    "Çevik adımlar, kalıcı sonuçlar.",
-    "Her ihtiyaç için en doğru çözüm, en kısa yoldan.",
-    "İnsanı anlayarak, potansiyeli ortaya çıkarıyoruz.",
-    "Kurumlara güç, bireylere ilham katıyoruz.",
-    "Samimiyetle gelişim, güvenle dönüşüm."
+    "İnsanı anlayarak, geleceğe ilham veriyoruz.",
+    "Her adımda potansiyeli keşfet, dönüşümü yaşa.",
+    "Gelişim yolculuğunda ışığınız biz olalım.",
+    "Güvenle başla, ilhamla ilerle.",
+    "Samimiyetle dokunuyoruz, ilhamla dönüştürüyoruz."
   ];
 
   return (
@@ -88,7 +84,7 @@ const About: React.FC = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
-        className="relative py-20 bg-gradient-to-br from-blue-50 via-white to-blue-50 overflow-hidden"
+        className="relative pt-20 pb-12 bg-gradient-to-br from-blue-50 via-white to-blue-50 overflow-hidden"
       >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
@@ -121,7 +117,7 @@ const About: React.FC = () => {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
-        className="py-20 bg-white"
+        className="pt-12 pb-20 bg-white"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div variants={sectionVariants} className="text-center mb-16">
@@ -227,12 +223,17 @@ const About: React.FC = () => {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
-        className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 text-white"
+        className="py-20 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 relative overflow-hidden"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-100/30 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-100/30 to-transparent rounded-full blur-3xl"></div>
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div variants={sectionVariants} className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6">İlham Verici Sözlerimiz</h2>
-            <p className="text-xl opacity-90 max-w-3xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-slate-800">İlham Verici Sözlerimiz</h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
               Çalışma felsefemizi yansıtan ve bizi motive eden sözler
             </p>
           </motion.div>
@@ -242,9 +243,9 @@ const About: React.FC = () => {
               <motion.div
                 key={index}
                 variants={cardVariants}
-                className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20 hover:bg-white/20 transition-colors duration-300"
+                className="bg-white border border-slate-200 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                <p className="text-lg font-medium text-center">{slogan}</p>
+                <p className="text-lg font-medium text-center text-slate-800">{slogan}</p>
               </motion.div>
             ))}
           </div>

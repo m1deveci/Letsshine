@@ -88,6 +88,17 @@ const psychologicalCategories: ServiceCategory[] = [
       Kaygı ve performans ilişkisi, odaklanma teknikleri, nefes/gevşeme egzersizleri ve sınav rutini oluşturma üzerine çalışılır.<br><br>
       6–8 seans + 1 takip önerilir. <em>(Takip seansı ücretsizdir.)</em>
     `
+  },
+  { 
+    id: '6',
+    value: 'gecmis_gelecek', 
+    name: 'Geçmişi Kabul Et, Geleceği Keşfet Programı',
+    description: 'Geçmiş deneyimlerle barışma ve gelecek hedeflerini belirleme sürecinde kapsamlı destek.',
+    icon: 'Heart',
+    tooltip: `
+      <strong>Geçmişi Kabul Et, Geleceği Keşfet Programı</strong><br>
+      Bu programda önce 6 seans boyunca psikologla çalışılır ve geçmişe ayna tutularak yaşanmışlar üzerindeki etkiler dengeye getirilir, sonra da koçla çalışılarak geleceğin tasarımı yapılır.
+    `
   }
 ];
 
@@ -342,7 +353,7 @@ const ServiceDetailPage: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Service Features - Show for non-coaching and non-psychological services */}
+              {/* Service Features - Show for all services except coaching and psychological */}
               {!isCoachingService && !isPsychologicalService && service.features && service.features.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
