@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
@@ -29,7 +30,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'letsshine-super-secret-key-2025';
 const pool = new pg.Pool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'letsshine',
+  database: process.env.DB_NAME || 'letsshine_db',
   user: process.env.DB_USER || 'letsshine_user',
   password: process.env.DB_PASSWORD || 'letsshine2025!',
   // Connection pool settings
