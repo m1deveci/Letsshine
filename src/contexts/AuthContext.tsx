@@ -34,21 +34,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Auto-login function to avoid infinite loop
   const autoLogin = async (email: string, encodedPassword: string): Promise<boolean> => {
     const password = atob(encodedPassword);
-    if (email === 'admin@devkit.com.tr' && password === 'Deveci1453') {
-      const adminUser: User = {
-        id: '1',
-        email,
-        role: 'admin'
-      };
-      const authToken = 'demo-token';
-      
-      setUser(adminUser);
-      setToken(authToken);
-      sessionStorage.setItem('user', JSON.stringify(adminUser));
-      sessionStorage.setItem('token', authToken);
-      return true;
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const { user: userData, token: authToken } = data;
+        
+        setUser(userData);
+        setToken(authToken);
+        sessionStorage.setItem('user', JSON.stringify(userData));
+        sessionStorage.setItem('token', authToken);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Auto-login error:', error);
+      return false;
     }
-    return false;
   };
 
   useEffect(() => {
@@ -74,40 +83,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string, rememberMe = false): Promise<boolean> => {
-    // Simple demo authentication - in production, use proper authentication
-    if (email === 'admin@devkit.com.tr' && password === 'Deveci1453') {
-      const adminUser: User = {
-        id: '1',
-        email,
-        role: 'admin'
-      };
-      const authToken = 'demo-token';
-      
-      setUser(adminUser);
-      setToken(authToken);
-      
-      if (rememberMe) {
-        // Remember user for auto-login
-        localStorage.setItem('rememberedUser', JSON.stringify(adminUser));
-        localStorage.setItem('rememberedCredentials', JSON.stringify({
-          email,
-          password: btoa(password) // Basic encoding (not secure for production)
-        }));
-        // Also save to sessionStorage for current session
-        sessionStorage.setItem('user', JSON.stringify(adminUser));
-        sessionStorage.setItem('token', authToken);
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const { user: userData, token: authToken } = data;
+        
+        setUser(userData);
+        setToken(authToken);
+        
+        if (rememberMe) {
+          // Remember user for auto-login
+          localStorage.setItem('rememberedUser', JSON.stringify(userData));
+          localStorage.setItem('rememberedCredentials', JSON.stringify({
+            email,
+            password: btoa(password) // Basic encoding (not secure for production)
+          }));
+          // Also save to sessionStorage for current session
+          sessionStorage.setItem('user', JSON.stringify(userData));
+          sessionStorage.setItem('token', authToken);
+        } else {
+          // Only save to sessionStorage (expires when browser closes)
+          sessionStorage.setItem('user', JSON.stringify(userData));
+          sessionStorage.setItem('token', authToken);
+          // Clear any remembered credentials
+          localStorage.removeItem('rememberedUser');
+          localStorage.removeItem('rememberedCredentials');
+        }
+        
+        return true;
       } else {
-        // Only save to sessionStorage (expires when browser closes)
-        sessionStorage.setItem('user', JSON.stringify(adminUser));
-        sessionStorage.setItem('token', authToken);
-        // Clear any remembered credentials
-        localStorage.removeItem('rememberedUser');
-        localStorage.removeItem('rememberedCredentials');
+        console.error('Login failed:', response.status);
+        return false;
       }
-      
-      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
