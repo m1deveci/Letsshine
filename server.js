@@ -11,6 +11,7 @@ import { dirname } from 'path';
 import { execSync } from 'child_process';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,6 +21,9 @@ const PORT = process.env.PORT || 3030;
 
 // Trust proxy for rate limiting
 app.set('trust proxy', 1);
+
+// JWT Secret Key
+const JWT_SECRET = process.env.JWT_SECRET || 'letsshine-super-secret-key-2025';
 
 // Database configuration
 const pool = new pg.Pool({
@@ -369,17 +373,37 @@ const authenticateAdmin = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
 
-    // Simple token validation - in production use JWT
-    if (token === process.env.ADMIN_TOKEN || token === 'demo-token') {
-      // For now, we'll use a simple approach where any valid token allows access
-      // In production, you should decode the JWT token and get user info from it
-      req.user = { id: '1', email: 'admin', role: 'admin' };
-      next();
-    } else {
-      res.status(401).json({ error: 'Unauthorized' });
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
     }
+
+    // Verify JWT token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Check if user still exists in database
+    const result = await pool.query(
+      'SELECT id, email, role FROM users WHERE id = $1 AND role = $2',
+      [decoded.id, 'admin']
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'User not found or not admin' });
+    }
+    
+    req.user = {
+      id: decoded.id.toString(),
+      email: decoded.email,
+      role: decoded.role
+    };
+    
+    next();
   } catch (error) {
     console.error('Authentication error:', error);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    } else if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
     res.status(401).json({ error: 'Unauthorized' });
   }
 };
@@ -408,9 +432,20 @@ app.post('/api/admin/login', authLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role 
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
     res.json({ 
       user: { id: user.id.toString(), email: user.email, role: user.role },
-      token: process.env.ADMIN_TOKEN || 'demo-token'
+      token: token
     });
   } catch (error) {
     console.error('Error during login:', error);
