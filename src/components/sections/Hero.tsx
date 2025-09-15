@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle, TrendingUp, Users, Award } from 'lucide-react';
+import { ArrowRight, CheckCircle, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import { useApp } from '../../contexts/AppContext';
@@ -17,15 +17,6 @@ const Hero: React.FC = () => {
     'Kurumsal Eğitimler'
   ];
 
-  const stats = heroContent?.stats || [
-    { number: '30+', label: 'Başarılı Proje', icon: TrendingUp },
-    { number: '210+', label: 'Mutlu Müşteri', icon: Users }
-  ];
-
-  const iconMap = {
-    'Başarılı Proje': TrendingUp,
-    'Mutlu Müşteri': Users
-  };
 
   return (
     <section className="relative bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 overflow-hidden">
@@ -133,53 +124,9 @@ const Hero: React.FC = () => {
               <div className="absolute bottom-6 left-6 w-12 h-12 bg-slate-600 rounded-full opacity-5"></div>
             </div>
 
-            {/* Professional Floating Cards */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.2 }}
-              className="absolute -top-8 -right-8 bg-slate-800 text-white p-6 rounded-2xl shadow-xl"
-            >
-              <div className="text-center">
-                <div className="text-2xl font-bold mb-1">98%</div>
-                <div className="text-sm text-slate-300">Müşteri Memnuniyeti</div>
-              </div>
-            </motion.div>
           </motion.div>
         </div>
 
-        {/* Professional Stats Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.2 }}
-          className="mt-24"
-        >
-          <div className="bg-slate-800 rounded-3xl p-12 shadow-2xl">
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {stats.map((stat, index) => {
-                const IconComponent = iconMap[stat.label as keyof typeof iconMap] || TrendingUp;
-                return (
-                  <div
-                    key={index}
-                    className="text-center bg-slate-700/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-600/30 hover:bg-slate-600/50 transition-all duration-300"
-                  >
-                    <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      <IconComponent className="w-8 h-8 text-white" />
-                    </div>
-                    <div className="text-4xl font-bold text-white mb-3">
-                      {stat.number}
-                    </div>
-                    <div className="text-slate-300 font-medium text-lg">
-                      {stat.label}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

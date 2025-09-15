@@ -161,7 +161,7 @@ const MessagesPage: React.FC = () => {
   const unreadCount = messages.filter(msg => !msg.readStatus).length;
 
   return (
-    <div className="space-y-8">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -197,9 +197,9 @@ const MessagesPage: React.FC = () => {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Messages List */}
-        <div className="lg:col-span-2">
+        <div className="xl:col-span-2">
           <Card>
             <div className="divide-y divide-gray-200">
               {loading ? (
@@ -312,10 +312,10 @@ const MessagesPage: React.FC = () => {
         </div>
 
         {/* Message Detail */}
-        <div className="lg:col-span-1">
+        <div className="xl:col-span-1">
           <Card>
             {selectedMessage ? (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">Mesaj Detayları</h3>
                   <Button
@@ -327,7 +327,7 @@ const MessagesPage: React.FC = () => {
                   </Button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       <User className="w-4 h-4 inline mr-1" />

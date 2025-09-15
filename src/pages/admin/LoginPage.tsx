@@ -90,13 +90,6 @@ const LoginPage: React.FC = () => {
               </div>
             )}
 
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <p className="text-sm text-blue-600">
-                <strong>Demo Giriş Bilgileri:</strong><br />
-                E-posta: admin@letsshine.com<br />
-                Şifre: admin123
-              </p>
-            </div>
 
             <Input
               label="E-posta Adresi"

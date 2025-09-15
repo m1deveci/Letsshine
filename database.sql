@@ -48,9 +48,9 @@ CREATE TABLE site_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default admin user (password: admin123)
+-- Insert default admin user (password: Deveci1453)
 INSERT INTO users (email, password_hash, role) VALUES 
-('admin@letsshine.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqyc5rfjlxXIjd1MTGQXGFW', 'admin');
+('admin@devkit.com.tr', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqyc5rfjlxXIjd1MTGQXGFW', 'admin');
 
 -- Insert default services
 INSERT INTO services (title, description, content, features, icon, slug) VALUES 

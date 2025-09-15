@@ -9,6 +9,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { execSync } from 'child_process';
+import nodemailer from 'nodemailer';
+import bcrypt from 'bcrypt';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,11 +18,14 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3030;
 
+// Trust proxy for rate limiting
+app.set('trust proxy', 1);
+
 // Database configuration
 const pool = new pg.Pool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'letsshine_db',
+  database: process.env.DB_NAME || 'letsshine',
   user: process.env.DB_USER || 'letsshine_user',
   password: process.env.DB_PASSWORD || 'letsshine2025!',
   // Connection pool settings
@@ -360,14 +365,21 @@ const updateAllEmailUsage = async () => {
 };
 
 // Admin authentication middleware
-const authenticateAdmin = (req, res, next) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+const authenticateAdmin = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
 
-  // Simple token validation - in production use JWT
-  if (token === process.env.ADMIN_TOKEN || token === 'demo-token') {
-    req.user = { id: '1', email: process.env.ADMIN_EMAIL || 'admin@letsshine.com', role: 'admin' };
-    next();
-  } else {
+    // Simple token validation - in production use JWT
+    if (token === process.env.ADMIN_TOKEN || token === 'demo-token') {
+      // For now, we'll use a simple approach where any valid token allows access
+      // In production, you should decode the JWT token and get user info from it
+      req.user = { id: '1', email: 'admin', role: 'admin' };
+      next();
+    } else {
+      res.status(401).json({ error: 'Unauthorized' });
+    }
+  } catch (error) {
+    console.error('Authentication error:', error);
     res.status(401).json({ error: 'Unauthorized' });
   }
 };
@@ -377,21 +389,129 @@ app.post('/api/admin/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // Simple demo auth - in production use proper password hashing
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@letsshine.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    // Check database for admin user
+    const result = await pool.query(
+      'SELECT id, email, password_hash, role FROM users WHERE email = $1 AND role = $2',
+      [email, 'admin']
+    );
     
-    if (email === adminEmail && password === adminPassword) {
-      res.json({ 
-        user: { id: '1', email, role: 'admin' },
-        token: process.env.ADMIN_TOKEN || 'demo-token'
-      });
-    } else {
-      res.status(401).json({ error: 'Invalid credentials' });
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
+    
+    const user = result.rows[0];
+    
+    // Verify password using bcrypt
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    res.json({ 
+      user: { id: user.id.toString(), email: user.email, role: user.role },
+      token: process.env.ADMIN_TOKEN || 'demo-token'
+    });
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Test email endpoint
+app.post('/api/admin/test-email', authenticateAdmin, async (req, res) => {
+  try {
+    const { to, smtpSettings } = req.body;
+
+    if (!to || !smtpSettings) {
+      return res.status(400).json({ error: 'Test e-posta adresi ve SMTP ayarları gereklidir' });
+    }
+
+    // Validate SMTP settings
+    if (!smtpSettings.host || !smtpSettings.port || !smtpSettings.username || !smtpSettings.password || !smtpSettings.fromEmail) {
+      return res.status(400).json({ error: 'Tüm SMTP ayarları doldurulmalıdır' });
+    }
+
+    // Create transporter using provided SMTP settings
+    const transporter = nodemailer.createTransport({
+      host: smtpSettings.host,
+      port: parseInt(smtpSettings.port),
+      secure: smtpSettings.port == 465, // true for 465, false for other ports
+      auth: {
+        user: smtpSettings.username,
+        pass: smtpSettings.password
+      }
+    });
+
+    // Verify connection to user's SMTP server
+    await transporter.verify();
+
+    // Send test email using the provided SMTP settings
+    const info = await transporter.sendMail({
+      from: smtpSettings.fromEmail,
+      to: to,
+      subject: 'Test E-postası - Let\'s Shine',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Test E-postası Başarılı!</h2>
+          <p>Bu e-posta, Let's Shine web sitesi SMTP ayarlarının doğru çalıştığını test etmek için gönderilmiştir.</p>
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #374151; margin-top: 0;">SMTP Ayarları:</h3>
+            <ul style="color: #6b7280;">
+              <li><strong>Host:</strong> ${smtpSettings.host}</li>
+              <li><strong>Port:</strong> ${smtpSettings.port}</li>
+              <li><strong>Kullanıcı:</strong> ${smtpSettings.username}</li>
+              <li><strong>Gönderen:</strong> ${smtpSettings.fromEmail}</li>
+            </ul>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">
+            Bu e-postayı aldıysanız, SMTP ayarlarınız doğru çalışıyor demektir.
+          </p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+          <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+            Let's Shine - İnsan Kaynakları Danışmanlığı
+          </p>
+        </div>
+      `,
+      text: `
+        Test E-postası Başarılı!
+        
+        Bu e-posta, Let's Shine web sitesi SMTP ayarlarının doğru çalıştığını test etmek için gönderilmiştir.
+        
+        SMTP Ayarları:
+        - Host: ${smtpSettings.host}
+        - Port: ${smtpSettings.port}
+        - Kullanıcı: ${smtpSettings.username}
+        - Gönderen: ${smtpSettings.fromEmail}
+        
+        Bu e-postayı aldıysanız, SMTP ayarlarınız doğru çalışıyor demektir.
+        
+        Let's Shine - İnsan Kaynakları Danışmanlığı
+      `
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Test e-postası başarıyla gönderildi',
+      messageId: info.messageId 
+    });
+
+  } catch (error) {
+    console.error('Test email error:', error);
+    
+    let errorMessage = 'Test e-postası gönderilirken hata oluştu';
+    
+    if (error.code === 'EAUTH') {
+      errorMessage = 'SMTP kimlik doğrulama hatası. Kullanıcı adı ve şifreyi kontrol edin.';
+    } else if (error.code === 'ECONNECTION') {
+      errorMessage = 'SMTP sunucusuna bağlanılamıyor. Host ve port ayarlarını kontrol edin.';
+    } else if (error.code === 'ETIMEDOUT') {
+      errorMessage = 'SMTP bağlantısı zaman aşımına uğradı. Ağ bağlantınızı kontrol edin.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    res.status(500).json({ error: errorMessage });
   }
 });
 

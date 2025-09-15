@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Auto-login function to avoid infinite loop
   const autoLogin = async (email: string, encodedPassword: string): Promise<boolean> => {
     const password = atob(encodedPassword);
-    if (email === 'admin@letsshine.com' && password === 'admin123') {
+    if (email === 'admin@devkit.com.tr' && password === 'Deveci1453') {
       const adminUser: User = {
         id: '1',
         email,
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string, rememberMe = false): Promise<boolean> => {
     // Simple demo authentication - in production, use proper authentication
-    if (email === 'admin@letsshine.com' && password === 'admin123') {
+    if (email === 'admin@devkit.com.tr' && password === 'Deveci1453') {
       const adminUser: User = {
         id: '1',
         email,

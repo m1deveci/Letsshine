@@ -110,18 +110,32 @@ const ContactPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* Map Placeholder */}
+              {/* Google Maps */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
                 <Card>
-                  <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500">Harita Görünümü</p>
-                    </div>
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Konumumuz
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Sema İş Merkezi'nde bulunan ofisimizi haritada görebilirsiniz.
+                    </p>
+                  </div>
+                  <div className="w-full h-96 rounded-lg overflow-hidden">
+                    <iframe 
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3125.770860588261!2d27.13788007586631!3d38.42365997182908!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14bbd8f0e6024ff1%3A0xcdbb98064e75d2af!2zU2VtYSDEsMWfIE1lci4!5e0!3m2!1str!2str!4v1757931714888!5m2!1str!2str" 
+                      width="100%" 
+                      height="100%" 
+                      style={{ border: 0 }} 
+                      allowFullScreen 
+                      loading="lazy" 
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Let's Shine Ofis Konumu"
+                    />
                   </div>
                 </Card>
               </motion.div>

@@ -19,7 +19,7 @@ const settingsSchema = z.object({
   email: z.string().email('Geçerli bir e-posta adresi giriniz'),
   address: z.string().min(1, 'Adres gereklidir'),
   smtpHost: z.string().optional(),
-  smtpPort: z.number().optional(),
+  smtpPort: z.coerce.number().optional(),
   smtpUsername: z.string().optional(),
   smtpPassword: z.string().optional(),
   smtpFromEmail: z.string().optional()
@@ -46,6 +46,10 @@ const SettingsPage: React.FC = () => {
     isActive: true
   });
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showTestEmailModal, setShowTestEmailModal] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{success: boolean, message: string} | null>(null);
 
   const { settings, updateSettings } = useApp();
   const { token } = useAuth();
@@ -303,6 +307,65 @@ const SettingsPage: React.FC = () => {
       }
     } catch (error) {
       console.error('E-posta hesapları yüklenirken hata:', error);
+    }
+  };
+
+  const handleTestEmail = async () => {
+    if (!testEmailAddress.trim()) {
+      setTestEmailResult({ success: false, message: 'Test e-posta adresi gereklidir!' });
+      return;
+    }
+
+    // E-posta format kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(testEmailAddress)) {
+      setTestEmailResult({ success: false, message: 'Geçerli bir e-posta adresi giriniz!' });
+      return;
+    }
+
+    setIsSendingTestEmail(true);
+    setTestEmailResult(null);
+
+    try {
+      const response = await fetch('/api/admin/test-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          to: testEmailAddress,
+          smtpSettings: {
+            host: watch('smtpHost'),
+            port: watch('smtpPort'),
+            username: watch('smtpUsername'),
+            password: watch('smtpPassword'),
+            fromEmail: watch('smtpFromEmail')
+          }
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        setTestEmailResult({ 
+          success: true, 
+          message: `Test e-postası başarıyla gönderildi! ${testEmailAddress} adresine kontrol edin.` 
+        });
+      } else {
+        setTestEmailResult({ 
+          success: false, 
+          message: result.error || 'Test e-postası gönderilirken hata oluştu!' 
+        });
+      }
+    } catch (error) {
+      console.error('Test email error:', error);
+      setTestEmailResult({ 
+        success: false, 
+        message: 'Bağlantı hatası! SMTP ayarlarını kontrol edin.' 
+      });
+    } finally {
+      setIsSendingTestEmail(false);
     }
   };
 
@@ -823,6 +886,17 @@ const SettingsPage: React.FC = () => {
                     error={errors.smtpFromEmail?.message}
                     placeholder="noreply@letsshine.com"
                   />
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowTestEmailModal(true)}
+                      leftIcon={<Mail className="w-4 h-4" />}
+                    >
+                      Test E-postası Gönder
+                    </Button>
+                  </div>
                 </motion.div>
               )}
 
@@ -1089,6 +1163,80 @@ const SettingsPage: React.FC = () => {
               >
                 {editingEmail ? 'Güncelle' : 'Oluştur'}
               </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Test Email Modal */}
+      {showTestEmailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg p-6 w-full max-w-md mx-4"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Mail className="w-5 h-5 mr-2 text-blue-600" />
+                Test E-postası Gönder
+              </h3>
+              <button
+                onClick={() => {
+                  setShowTestEmailModal(false);
+                  setTestEmailAddress('');
+                  setTestEmailResult(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Test E-posta Adresi
+                </label>
+                <input
+                  type="email"
+                  value={testEmailAddress}
+                  onChange={(e) => setTestEmailAddress(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="test@example.com"
+                />
+              </div>
+
+              {testEmailResult && (
+                <div className={`p-3 rounded-lg ${
+                  testEmailResult.success 
+                    ? 'bg-green-50 border border-green-200 text-green-800' 
+                    : 'bg-red-50 border border-red-200 text-red-800'
+                }`}>
+                  <p className="text-sm">{testEmailResult.message}</p>
+                </div>
+              )}
+
+              <div className="flex space-x-3 mt-6">
+                <Button
+                  onClick={() => {
+                    setShowTestEmailModal(false);
+                    setTestEmailAddress('');
+                    setTestEmailResult(null);
+                  }}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700"
+                >
+                  İptal
+                </Button>
+                <Button
+                  onClick={handleTestEmail}
+                  disabled={isSendingTestEmail}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  leftIcon={<Mail className="w-4 h-4" />}
+                >
+                  {isSendingTestEmail ? 'Gönderiliyor...' : 'Test E-postası Gönder'}
+                </Button>
+              </div>
             </div>
           </motion.div>
         </div>
