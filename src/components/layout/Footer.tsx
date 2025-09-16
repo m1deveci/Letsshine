@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Linkedin, Instagram, Facebook } from 'lucide-react';
+import { Phone, Mail, MapPin, Linkedin, Instagram, Facebook, Twitter } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
+import { LegalPage } from '../../types';
 
 const Footer: React.FC = () => {
   const { settings } = useApp();
+  const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
+
+  useEffect(() => {
+    const fetchLegalPages = async () => {
+      try {
+        const response = await fetch('/api/legal-pages');
+        if (response.ok) {
+          const data = await response.json();
+          setLegalPages(data);
+        }
+      } catch (error) {
+        console.error('Error fetching legal pages:', error);
+      }
+    };
+
+    fetchLegalPages();
+  }, []);
 
   return (
     <footer className="bg-slate-100 text-slate-800">
@@ -69,18 +87,18 @@ const Footer: React.FC = () => {
 
           {/* Legal */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">Yasal</h3>
+            <h3 className="text-lg font-semibold mb-4 text-slate-800">Yasal Bilgiler</h3>
             <ul className="space-y-2">
-              <li>
-                <Link to="/gizlilik-politikasi" className="text-slate-600 text-sm hover:text-blue-600 transition-colors">
-                  Gizlilik Politikası
-                </Link>
-              </li>
-              <li>
-                <Link to="/kullanim-sartlari" className="text-slate-600 text-sm hover:text-blue-600 transition-colors">
-                  Kullanım Şartları
-                </Link>
-              </li>
+              {legalPages.map((page) => (
+                <li key={page.id}>
+                  <Link 
+                    to={`/yasal/${page.slug}`} 
+                    className="text-slate-600 text-sm hover:text-blue-600 transition-colors"
+                  >
+                    {page.title}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -97,6 +115,17 @@ const Footer: React.FC = () => {
                   title="LinkedIn"
                 >
                   <Linkedin className="w-5 h-5 text-slate-600 group-hover:text-white" />
+                </a>
+              )}
+              {settings.socialMedia?.twitter && (
+                <a
+                  href={settings.socialMedia.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 bg-white hover:bg-sky-500 rounded-lg transition-colors duration-300 group shadow-sm border border-slate-200"
+                  title="Twitter"
+                >
+                  <Twitter className="w-5 h-5 text-slate-600 group-hover:text-white" />
                 </a>
               )}
               {settings.socialMedia?.instagram && (
@@ -126,18 +155,10 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-slate-300 mt-8 pt-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="flex justify-center">
             <p className="text-slate-500 text-sm">
               © 2025 Let's Shine. Tüm hakları saklıdır.
             </p>
-            <div className="flex space-x-4 mt-4 md:mt-0">
-              <Link to="/gizlilik-politikasi" className="text-slate-500 text-sm hover:text-blue-600">
-                Gizlilik Politikası
-              </Link>
-              <Link to="/kullanim-sartlari" className="text-slate-500 text-sm hover:text-blue-600">
-                Kullanım Şartları
-              </Link>
-            </div>
           </div>
         </div>
       </div>

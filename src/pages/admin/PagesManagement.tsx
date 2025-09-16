@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Edit, Settings, Layout, Navigation } from 'lucide-react';
+import { FileText, Edit, Settings, Layout, Navigation, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -30,6 +30,14 @@ const PagesManagement: React.FC = () => {
       icon: FileText,
       path: '/admin/about',
       color: 'bg-purple-500'
+    },
+    {
+      id: 'legal',
+      title: 'Yasal Sayfalar',
+      description: 'Footer yasal sayfalarını yönetin',
+      icon: Scale,
+      path: '/admin/legal-pages',
+      color: 'bg-orange-500'
     }
   ];
 

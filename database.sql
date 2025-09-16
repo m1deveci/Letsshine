@@ -160,8 +160,111 @@ CREATE TABLE team_members (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Legal pages table for footer legal links
+CREATE TABLE legal_pages (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    content TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    order_position INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default legal pages
+INSERT INTO legal_pages (title, slug, content, order_position) VALUES 
+('Yasal Bilgilendirme', 'yasal-bilgilendirme', 
+'<h2>Yasal Bilgilendirme</h2>
+<p>Bu sayfa, Let''s Shine İnsan Kaynakları Danışmanlığı hizmetleri ile ilgili yasal bilgileri içermektedir.</p>
+
+<h3>Şirket Bilgileri</h3>
+<p><strong>Şirket Adı:</strong> Let''s Shine İnsan Kaynakları Danışmanlığı<br>
+<strong>Adres:</strong> İzmir, Türkiye<br>
+<strong>E-posta:</strong> info@letsshine.com.tr<br>
+<strong>Telefon:</strong> +90 (XXX) XXX XX XX</p>
+
+<h3>Hizmet Alanları</h3>
+<ul>
+<li>İnsan Kaynakları Danışmanlığı</li>
+<li>Koçluk ve Mentorluk</li>
+<li>Psikolojik Danışmanlık</li>
+<li>Ücretlendirme Danışmanlığı</li>
+</ul>
+
+<h3>Yasal Uyumluluk</h3>
+<p>Şirketimiz, Türkiye Cumhuriyeti yasalarına ve mevzuatına tam uyumlu olarak faaliyet göstermektedir.</p>', 1),
+
+('Gizlilik Politikası', 'gizlilik-politikasi', 
+'<h2>Gizlilik Politikası</h2>
+<p>Bu gizlilik politikası, Let''s Shine İnsan Kaynakları Danışmanlığı olarak kişisel verilerinizi nasıl topladığımız, kullandığımız ve koruduğumuz hakkında bilgi vermektedir.</p>
+
+<h3>Toplanan Bilgiler</h3>
+<p>Hizmetlerimiz kapsamında aşağıdaki kişisel bilgileri toplayabiliriz:</p>
+<ul>
+<li>Ad, soyad</li>
+<li>E-posta adresi</li>
+<li>Telefon numarası</li>
+<li>İş deneyimi ve eğitim bilgileri</li>
+<li>CV ve özgeçmiş bilgileri</li>
+</ul>
+
+<h3>Bilgilerin Kullanımı</h3>
+<p>Topladığımız kişisel bilgiler aşağıdaki amaçlarla kullanılır:</p>
+<ul>
+<li>Hizmet taleplerinizi değerlendirmek</li>
+<li>Size uygun danışmanlık hizmetleri sunmak</li>
+<li>İletişim kurmak ve bilgilendirme yapmak</li>
+<li>Hizmet kalitesini artırmak</li>
+</ul>
+
+<h3>Bilgi Güvenliği</h3>
+<p>Kişisel verilerinizi korumak için uygun teknik ve idari güvenlik önlemlerini alırız.</p>', 2),
+
+('KVKK Aydınlatma Metni', 'kvkk-aydinlatma-metni', 
+'<h2>KVKK Aydınlatma Metni</h2>
+<p>6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında, kişisel verilerinizin işlenmesi hakkında aydınlatma metnidir.</p>
+
+<h3>Veri Sorumlusu</h3>
+<p><strong>Şirket:</strong> Let''s Shine İnsan Kaynakları Danışmanlığı<br>
+<strong>Adres:</strong> İzmir, Türkiye<br>
+<strong>E-posta:</strong> info@letsshine.com.tr</p>
+
+<h3>Kişisel Verilerin İşlenme Amaçları</h3>
+<p>Kişisel verileriniz aşağıdaki amaçlarla işlenmektedir:</p>
+<ul>
+<li>İnsan kaynakları danışmanlık hizmetlerinin sunulması</li>
+<li>Müşteri ilişkilerinin yönetilmesi</li>
+<li>Hukuki yükümlülüklerin yerine getirilmesi</li>
+<li>İletişim ve bilgilendirme faaliyetlerinin gerçekleştirilmesi</li>
+</ul>
+
+<h3>Kişisel Verilerin Toplanma Yöntemi</h3>
+<p>Kişisel verileriniz, aşağıdaki yöntemlerle toplanmaktadır:</p>
+<ul>
+<li>Web sitesi üzerinden doldurulan formlar</li>
+<li>E-posta yoluyla gönderilen bilgiler</li>
+<li>Telefon görüşmeleri</li>
+<li>Yüz yüze görüşmeler</li>
+</ul>
+
+<h3>Veri Sahibinin Hakları</h3>
+<p>KVKK''nın 11. maddesi uyarınca aşağıdaki haklara sahipsiniz:</p>
+<ul>
+<li>Kişisel verilerinizin işlenip işlenmediğini öğrenme</li>
+<li>İşlenen kişisel verileriniz hakkında bilgi talep etme</li>
+<li>İşlenme amacını ve bunların amacına uygun kullanılıp kullanılmadığını öğrenme</li>
+<li>Yurt içinde veya yurt dışında kişisel verilerinizin aktarıldığı üçüncü kişileri bilme</li>
+<li>Kişisel verilerinizin eksik veya yanlış işlenmiş olması hâlinde bunların düzeltilmesini isteme</li>
+<li>Belirtilen şartlar çerçevesinde kişisel verilerinizin silinmesini veya yok edilmesini isteme</li>
+</ul>
+
+<h3>İletişim</h3>
+<p>KVKK kapsamındaki taleplerinizi info@letsshine.com.tr adresine e-posta göndererek iletebilirsiniz.</p>', 3);
+
 -- Create triggers for updated_at columns
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_services_updated_at BEFORE UPDATE ON services FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_site_settings_updated_at BEFORE UPDATE ON site_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_team_members_updated_at BEFORE UPDATE ON team_members FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_legal_pages_updated_at BEFORE UPDATE ON legal_pages FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

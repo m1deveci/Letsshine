@@ -131,3 +131,14 @@ export interface NavigationItem {
   isActive: boolean;
   isExternal?: boolean;
 }
+
+export interface LegalPage {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  isActive: boolean;
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
+}

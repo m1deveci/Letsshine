@@ -42,6 +42,8 @@ src/
 - ✅ TypeScript type safety
 - ✅ Accessibility (a11y) uyumlu
 - ✅ Progressive Web App (PWA) hazır
+- ✅ Yasal sayfalar yönetimi (Footer)
+- ✅ Admin panel ile içerik yönetimi
 
 ## 🛠️ Kurulum
 
@@ -96,3 +98,16 @@ Bu proje Let's Shine İnsan Kaynakları Danışmanlığı için geliştirilmişt
 ---
 
 **Let's Shine** - İnsan Kaynakları Danışmanlığında Güvenilir Çözüm Ortağınız
+
+---
+
+## 📅 Güncelleme Geçmişi
+
+### 16 Eylül 2025 - Yasal Sayfalar Sistemi Eklendi
+- Footer alanına yasal sayfa bağlantıları eklendi
+- Yasal Bilgilendirme, Gizlilik Politikası, KVKK Aydınlatma Metni sayfaları oluşturuldu
+- Admin panelde yasal sayfalar yönetim sistemi eklendi
+- Veritabanına `legal_pages` tablosu eklendi
+- API endpoint'leri oluşturuldu (/api/legal-pages)
+- Yasal sayfalar için dinamik routing sistemi (/yasal/:slug)
+- HTML içerik desteği ile zengin metin editörü

@@ -16,6 +16,7 @@ import TeamPage from './pages/TeamPage';
 import ServicesPage from './pages/ServicesPage';
 import ServiceDetailPage from './pages/ServiceDetailPage';
 import ContactPage from './pages/ContactPage';
+import LegalPage from './pages/LegalPage';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -29,6 +30,7 @@ import SettingsPage from './pages/admin/SettingsPage';
 import HeroManagement from './pages/admin/HeroManagement';
 import NavigationManagement from './pages/admin/NavigationManagement';
 import PagesManagement from './pages/admin/PagesManagement';
+import LegalPagesManagement from './pages/admin/LegalPagesManagement';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +63,7 @@ function App() {
                         <Route path="/hizmetler" element={<ServicesPage />} />
                         <Route path="/hizmet/:slug" element={<ServiceDetailPage />} />
                         <Route path="/iletisim" element={<ContactPage />} />
+                        <Route path="/yasal/:slug" element={<LegalPage />} />
                       </Routes>
                     </main>
                     <Footer />
@@ -79,6 +82,7 @@ function App() {
                 <Route path="pages" element={<PagesManagement />} />
                 <Route path="pages/hero" element={<HeroManagement />} />
                 <Route path="pages/navigation" element={<NavigationManagement />} />
+                <Route path="legal-pages" element={<LegalPagesManagement />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Routes>

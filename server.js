@@ -1412,6 +1412,149 @@ app.delete('/api/admin/messages/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Legal Pages API endpoints
+app.get('/api/legal-pages', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM legal_pages WHERE is_active = true ORDER BY order_position ASC'
+    );
+    res.json(result.rows.map(row => ({
+      id: row.id.toString(),
+      title: row.title,
+      slug: row.slug,
+      content: row.content,
+      isActive: row.is_active,
+      order: row.order_position,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    })));
+  } catch (error) {
+    console.error('Error fetching legal pages:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get single legal page by slug
+app.get('/api/legal-pages/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM legal_pages WHERE slug = $1 AND is_active = true',
+      [slug]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Sayfa bulunamadı' });
+    }
+    
+    const page = result.rows[0];
+    res.json({
+      id: page.id.toString(),
+      title: page.title,
+      slug: page.slug,
+      content: page.content,
+      isActive: page.is_active,
+      order: page.order_position,
+      createdAt: page.created_at,
+      updatedAt: page.updated_at
+    });
+  } catch (error) {
+    console.error('Error fetching legal page:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Admin Legal Pages CRUD endpoints
+app.post('/api/legal-pages', authenticateAdmin, async (req, res) => {
+  try {
+    const { title, slug, content, order, isActive } = req.body;
+    
+    if (!title || !slug || !content) {
+      return res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    }
+    
+    const result = await pool.query(
+      'INSERT INTO legal_pages (title, slug, content, order_position, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [title, slug, content, order || 0, isActive !== undefined ? isActive : true]
+    );
+    
+    const page = result.rows[0];
+    res.status(201).json({
+      id: page.id.toString(),
+      title: page.title,
+      slug: page.slug,
+      content: page.content,
+      isActive: page.is_active,
+      order: page.order_position,
+      createdAt: page.created_at,
+      updatedAt: page.updated_at
+    });
+  } catch (error) {
+    console.error('Error creating legal page:', error);
+    if (error.code === '23505') { // Unique constraint violation
+      res.status(400).json({ error: 'Bu slug zaten kullanılıyor' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+app.put('/api/legal-pages/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, slug, content, order, isActive } = req.body;
+    
+    if (!title || !slug || !content) {
+      return res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    }
+    
+    const result = await pool.query(
+      'UPDATE legal_pages SET title = $1, slug = $2, content = $3, order_position = $4, is_active = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
+      [title, slug, content, order || 0, isActive !== undefined ? isActive : true, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Sayfa bulunamadı' });
+    }
+    
+    const page = result.rows[0];
+    res.json({
+      id: page.id.toString(),
+      title: page.title,
+      slug: page.slug,
+      content: page.content,
+      isActive: page.is_active,
+      order: page.order_position,
+      createdAt: page.created_at,
+      updatedAt: page.updated_at
+    });
+  } catch (error) {
+    console.error('Error updating legal page:', error);
+    if (error.code === '23505') { // Unique constraint violation
+      res.status(400).json({ error: 'Bu slug zaten kullanılıyor' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+app.delete('/api/legal-pages/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query('DELETE FROM legal_pages WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Sayfa bulunamadı' });
+    }
+    
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting legal page:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Navigation API endpoints
 app.get('/api/navigation', async (req, res) => {
   try {

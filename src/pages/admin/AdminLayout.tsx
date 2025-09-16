@@ -12,7 +12,8 @@ import {
   FileText,
   Layout,
   Navigation,
-  Mail
+  Mail,
+  Scale
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
@@ -108,7 +109,8 @@ const AdminLayout: React.FC = () => {
     { name: 'Mesajlar', href: '/admin/messages', icon: Mail },
     { name: 'Sayfa Yönetimi', href: '/admin/pages', icon: Layout, children: [
       { name: 'Ana Sayfa', href: '/admin/pages/hero', icon: Home },
-      { name: 'Menü Yönetimi', href: '/admin/pages/navigation', icon: Navigation }
+      { name: 'Menü Yönetimi', href: '/admin/pages/navigation', icon: Navigation },
+      { name: 'Yasal Sayfalar', href: '/admin/legal-pages', icon: Scale }
     ]},
     { name: 'Ayarlar', href: '/admin/settings', icon: Settings }
   ];
