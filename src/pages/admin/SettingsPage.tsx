@@ -302,6 +302,85 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const handleWebmailLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Lütfen geçerli bir resim dosyası seçin.');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Dosya boyutu 2MB\'dan küçük olmalıdır.');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+
+      const response = await fetch('/api/admin/webmail-logo', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Webmail logo upload failed');
+      }
+
+      const result = await response.json();
+      setSuccessMessage('Webmail logosu başarıyla güncellendi!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+
+      console.log('Webmail logo uploaded successfully:', result);
+
+    } catch (error) {
+      console.error('Error uploading webmail logo:', error);
+      alert('Webmail logosu yüklenirken hata oluştu.');
+    }
+
+    // Clear the input
+    event.target.value = '';
+  };
+
+  const handleRestoreWebmailLogo = async () => {
+    if (!confirm('Orijinal webmail logosunu geri yüklemek istediğinizden emin misiniz?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/webmail-logo/restore', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Restore failed');
+      }
+
+      const result = await response.json();
+      setSuccessMessage('Orijinal webmail logosu geri yüklendi!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+
+      console.log('Webmail logo restored successfully:', result);
+
+    } catch (error) {
+      console.error('Error restoring webmail logo:', error);
+      alert('Orijinal logo geri yüklenirken hata oluştu.');
+    }
+  };
+
   const updateFaviconInDOM = (faviconUrl: string) => {
     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (!link) {
@@ -789,6 +868,50 @@ const SettingsPage: React.FC = () => {
                       
                       <p className="text-xs text-gray-500">
                         Önerilen boyut: 32x32px veya 16x16px | Desteklenen formatlar: ICO, PNG
+                      </p>
+                    </div>
+
+                    {/* Webmail Logo Upload */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium text-gray-900">Webmail Logosu</h3>
+
+                      <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                        <div className="space-y-2">
+                          <Upload className="w-10 h-10 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-500">Webmail logosu yüklemek için tıklayın</p>
+                          <p className="text-xs text-gray-400">Bu logo webmail.letsshine.com.tr sayfasında görüntülenecek</p>
+                        </div>
+
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleWebmailLogoUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRestoreWebmailLogo}
+                          className="text-xs"
+                        >
+                          Orijinal Logoyu Geri Yükle
+                        </Button>
+                        <a
+                          href="https://webmail.letsshine.com.tr"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                        >
+                          Webmail'i Görüntüle
+                        </a>
+                      </div>
+
+                      <p className="text-xs text-gray-500">
+                        Önerilen boyut: 200x60px | Desteklenen formatlar: JPG, PNG, SVG
                       </p>
                     </div>
                   </div>

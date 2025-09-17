@@ -1458,14 +1458,105 @@ app.post('/api/admin/upload', authenticateAdmin, upload.single('image'), async (
     const resizedFilename = req.file.filename.replace(/\.[^/.]+$/, '_resized.jpg');
     const fileUrl = `/uploads/${resizedFilename}`;
     
-    res.json({ 
+
+    res.json({
       message: 'File uploaded and resized successfully',
       url: fileUrl,
-      filename: resizedFilename 
+      filename: resizedFilename
     });
   } catch (error) {
     console.error('Error uploading file:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Webmail Logo Upload API
+app.post('/api/admin/webmail-logo', authenticateAdmin, upload.single('logo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Logo dosyası yüklenmedi' });
+    }
+
+    const originalPath = req.file.path;
+    const webmailLogoPath = '/var/www/webmail.letsshine.com.tr/skins/elastic/images/logo.svg';
+    const backupPath = webmailLogoPath + '.backup';
+
+    // Backup original logo if exists
+    if (fs.existsSync(webmailLogoPath) && !fs.existsSync(backupPath)) {
+      fs.copyFileSync(webmailLogoPath, backupPath);
+      console.log('Original webmail logo backed up');
+    }
+
+    // Resize and optimize the uploaded logo for webmail
+    const webmailOptimizedPath = '/var/www/webmail.letsshine.com.tr/skins/elastic/images/logo-custom.png';
+
+    await sharp(originalPath)
+      .resize(200, 60, {
+        fit: 'inside',
+        withoutEnlargement: true,
+        background: { r: 255, g: 255, b: 255, alpha: 0 }
+      })
+      .png({ quality: 90 })
+      .toFile(webmailOptimizedPath);
+
+    // Update the main logo.svg to use the new image
+    const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 60">
+  <image width="200" height="60" xlink:href="logo-custom.png"/>
+</svg>`;
+
+    fs.writeFileSync(webmailLogoPath, svgContent);
+
+    // Clean up uploaded file
+    fs.unlinkSync(originalPath);
+
+    // Save logo info to database/settings
+    const resizedFilename = req.file.filename.replace(/\.[^/.]+$/, '_webmail.png');
+    const resizedPath = path.join(__dirname, 'uploads', resizedFilename);
+    fs.copyFileSync(webmailOptimizedPath, resizedPath);
+
+    console.log('Webmail logo updated successfully');
+
+    res.json({
+      message: 'Webmail logosu başarıyla güncellendi',
+      logoPath: '/skins/elastic/images/logo.svg',
+      backupPath: '/skins/elastic/images/logo.svg.backup'
+    });
+
+  } catch (error) {
+    console.error('Error updating webmail logo:', error);
+    res.status(500).json({ error: 'Webmail logosu güncellenirken hata oluştu: ' + error.message });
+  }
+});
+
+// Restore Original Webmail Logo API
+app.post('/api/admin/webmail-logo/restore', authenticateAdmin, async (req, res) => {
+  try {
+    const webmailLogoPath = '/var/www/webmail.letsshine.com.tr/skins/elastic/images/logo.svg';
+    const backupPath = webmailLogoPath + '.backup';
+
+    if (!fs.existsSync(backupPath)) {
+      return res.status(404).json({ error: 'Orijinal logo yedeği bulunamadı' });
+    }
+
+    // Restore original logo
+    fs.copyFileSync(backupPath, webmailLogoPath);
+
+    // Remove custom logo file
+    const customLogoPath = '/var/www/webmail.letsshine.com.tr/skins/elastic/images/logo-custom.png';
+    if (fs.existsSync(customLogoPath)) {
+      fs.unlinkSync(customLogoPath);
+    }
+
+    console.log('Original webmail logo restored');
+
+    res.json({
+      message: 'Orijinal webmail logosu geri yüklendi'
+    });
+
+  } catch (error) {
+    console.error('Error restoring webmail logo:', error);
+    res.status(500).json({ error: 'Orijinal logo geri yüklenirken hata oluştu: ' + error.message });
   }
 });
 
