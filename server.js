@@ -68,10 +68,10 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   
   // Content Security Policy
-  res.setHeader('Content-Security-Policy', 
+  res.setHeader('Content-Security-Policy',
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; " +
-    "script-src-elem 'self' 'unsafe-inline' https://static.cloudflareinsights.com; " +
+    "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; " +
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: blob:; " +
     "font-src 'self' data:; " +
@@ -347,6 +347,166 @@ const getEmailUsage = (email) => {
   } catch (error) {
     console.error(`Error calculating email usage for ${email}:`, error);
     return 0;
+  }
+};
+
+// Function to create real email account in mail server
+const createEmailAccountInMailServer = (email, password) => {
+  try {
+    // Read current passwd file
+    const passwdFile = '/etc/dovecot/passwd';
+    let passwdContent = '';
+
+    if (fs.existsSync(passwdFile)) {
+      passwdContent = fs.readFileSync(passwdFile, 'utf8');
+    }
+
+    // Check if email already exists with exact line match
+    const lines = passwdContent.split('\n');
+    const existingLine = lines.find(line => line.startsWith(email + ':'));
+
+    if (existingLine) {
+      console.log(`Email account already exists in mail server: ${email}`);
+      // If it exists but with different password, update it
+      const currentPassword = existingLine.split(':{PLAIN}')[1];
+      if (currentPassword !== password) {
+        return updateEmailPasswordInMailServer(email, password);
+      }
+      return true; // Already exists with same password
+    }
+
+    // Add new email account
+    const newEntry = `${email}:{PLAIN}${password}`;
+
+    // Add to content (ensure no double newlines)
+    if (passwdContent && !passwdContent.endsWith('\n')) {
+      passwdContent += '\n';
+    }
+    passwdContent += newEntry + '\n';
+
+    // Write back to passwd file
+    fs.writeFileSync(passwdFile, passwdContent);
+
+    // Also add to Postfix virtual mailbox maps
+    const domain = email.split('@')[1];
+    const username = email.split('@')[0];
+    const virtualMapsFile = '/etc/postfix/virtual_mailbox_maps';
+    const virtualEntry = `${email} ${domain}/${username}/`;
+
+    let virtualContent = '';
+    if (fs.existsSync(virtualMapsFile)) {
+      virtualContent = fs.readFileSync(virtualMapsFile, 'utf8');
+    }
+
+    // Check if entry already exists in virtual maps
+    if (!virtualContent.includes(virtualEntry)) {
+      if (virtualContent && !virtualContent.endsWith('\n')) {
+        virtualContent += '\n';
+      }
+      virtualContent += virtualEntry + '\n';
+      fs.writeFileSync(virtualMapsFile, virtualContent);
+
+      // Rebuild Postfix database
+      execSync('postmap /etc/postfix/virtual_mailbox_maps', { timeout: 5000 });
+    }
+
+    // Reload services
+    execSync('systemctl reload dovecot', { timeout: 5000 });
+    execSync('systemctl reload postfix', { timeout: 5000 });
+
+    console.log(`Email account created in mail server: ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`Error creating email account in mail server: ${email}`, error);
+    throw error;
+  }
+};
+
+// Function to update email password in mail server
+const updateEmailPasswordInMailServer = (email, newPassword) => {
+  try {
+    const passwdFile = '/etc/dovecot/passwd';
+
+    if (!fs.existsSync(passwdFile)) {
+      throw new Error('Passwd file not found');
+    }
+
+    let passwdContent = fs.readFileSync(passwdFile, 'utf8');
+    const lines = passwdContent.split('\n');
+
+    // Find and update the password line
+    let updated = false;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith(email + ':')) {
+        lines[i] = `${email}:{PLAIN}${newPassword}`;
+        updated = true;
+        break;
+      }
+    }
+
+    if (!updated) {
+      throw new Error('Email account not found in mail server');
+    }
+
+    // Write back to passwd file
+    fs.writeFileSync(passwdFile, lines.join('\n'));
+
+    // Reload Dovecot configuration
+    execSync('systemctl reload dovecot', { timeout: 5000 });
+
+    console.log(`Email password updated in mail server: ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`Error updating email password in mail server: ${email}`, error);
+    throw error;
+  }
+};
+
+// Function to delete email account from mail server
+const deleteEmailAccountFromMailServer = (email) => {
+  try {
+    const passwdFile = '/etc/dovecot/passwd';
+
+    if (!fs.existsSync(passwdFile)) {
+      throw new Error('Passwd file not found');
+    }
+
+    let passwdContent = fs.readFileSync(passwdFile, 'utf8');
+    const lines = passwdContent.split('\n');
+
+    // Remove the email account line
+    const filteredLines = lines.filter(line => !line.startsWith(email + ':'));
+
+    if (filteredLines.length === lines.length) {
+      throw new Error('Email account not found in mail server');
+    }
+
+    // Write back to passwd file
+    fs.writeFileSync(passwdFile, filteredLines.join('\n'));
+
+    // Also remove from Postfix virtual mailbox maps
+    const virtualMapsFile = '/etc/postfix/virtual_mailbox_maps';
+    if (fs.existsSync(virtualMapsFile)) {
+      let virtualContent = fs.readFileSync(virtualMapsFile, 'utf8');
+      const virtualLines = virtualContent.split('\n');
+      const filteredVirtualLines = virtualLines.filter(line => !line.startsWith(email + ' '));
+
+      if (filteredVirtualLines.length !== virtualLines.length) {
+        fs.writeFileSync(virtualMapsFile, filteredVirtualLines.join('\n'));
+        // Rebuild Postfix database
+        execSync('postmap /etc/postfix/virtual_mailbox_maps', { timeout: 5000 });
+      }
+    }
+
+    // Reload services
+    execSync('systemctl reload dovecot', { timeout: 5000 });
+    execSync('systemctl reload postfix', { timeout: 5000 });
+
+    console.log(`Email account deleted from mail server: ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting email account from mail server: ${email}`, error);
+    throw error;
   }
 };
 
@@ -1707,30 +1867,55 @@ app.post('/api/admin/email-accounts', authenticateAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Geçerli bir e-posta adresi giriniz' });
     }
 
-    // Check if email already exists
+    // Check if email already exists in database
     const existingEmail = await pool.query('SELECT id FROM email_accounts WHERE email = $1', [email]);
     if (existingEmail.rows.length > 0) {
       return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
     }
 
+    // Create email account in mail server first
+    try {
+      await createEmailAccountInMailServer(email, password);
+    } catch (mailServerError) {
+      console.error('Mail server error:', mailServerError);
+      // If it's just a "already exists" error and we're trying to sync, continue
+      if (mailServerError.message.includes('already exists')) {
+        console.log('Account exists in mail server, proceeding with database sync');
+      } else {
+        return res.status(500).json({
+          error: 'E-posta hesabı mail sunucusunda oluşturulamadı: ' + mailServerError.message
+        });
+      }
+    }
+
     // Hash password (in production, use proper password hashing)
     const hashedPassword = password; // Simplified for demo
 
-    const result = await pool.query(
-      'INSERT INTO email_accounts (email, password_hash, quota, used_mb, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [email, hashedPassword, quota || 1000, 0, isActive !== undefined ? isActive : true]
-    );
+    try {
+      const result = await pool.query(
+        'INSERT INTO email_accounts (email, password_hash, quota, used_mb, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [email, hashedPassword, quota || 1000, 0, isActive !== undefined ? isActive : true]
+      );
 
-    const account = result.rows[0];
-    res.status(201).json({
-      id: account.id.toString(),
-      email: account.email,
-      quota: account.quota,
-      usedMb: account.used_mb || 0,
-      isActive: account.is_active,
-      createdAt: account.created_at,
-      updatedAt: account.updated_at
-    });
+      const account = result.rows[0];
+      res.status(201).json({
+        id: account.id.toString(),
+        email: account.email,
+        quota: account.quota,
+        usedMb: account.used_mb || 0,
+        isActive: account.is_active,
+        createdAt: account.created_at,
+        updatedAt: account.updated_at
+      });
+    } catch (dbError) {
+      // If database insertion fails, try to remove from mail server
+      try {
+        await deleteEmailAccountFromMailServer(email);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup mail server account:', cleanupError);
+      }
+      throw dbError;
+    }
   } catch (error) {
     console.error('Error creating email account:', error);
     if (error.code === '23505') { // Unique constraint violation
@@ -1745,6 +1930,26 @@ app.put('/api/admin/email-accounts/:id', authenticateAdmin, async (req, res) => 
   try {
     const { id } = req.params;
     const { password, quota, usedMb, isActive } = req.body;
+
+    // Get current email account details
+    const currentAccount = await pool.query('SELECT email FROM email_accounts WHERE id = $1', [id]);
+    if (currentAccount.rows.length === 0) {
+      return res.status(404).json({ error: 'E-posta hesabı bulunamadı' });
+    }
+
+    const email = currentAccount.rows[0].email;
+
+    // Update password in mail server if provided
+    if (password) {
+      try {
+        await updateEmailPasswordInMailServer(email, password);
+      } catch (mailServerError) {
+        console.error('Mail server password update error:', mailServerError);
+        return res.status(500).json({
+          error: 'Şifre mail sunucusunda güncellenemedi: ' + mailServerError.message
+        });
+      }
+    }
 
     // Build dynamic update query
     const updateFields = [];
@@ -1786,10 +1991,6 @@ app.put('/api/admin/email-accounts/:id', authenticateAdmin, async (req, res) => 
 
     const result = await pool.query(query, values);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'E-posta hesabı bulunamadı' });
-    }
-
     const account = result.rows[0];
     res.json({
       id: account.id.toString(),
@@ -1810,16 +2011,88 @@ app.delete('/api/admin/email-accounts/:id', authenticateAdmin, async (req, res) 
   try {
     const { id } = req.params;
 
-    const result = await pool.query('DELETE FROM email_accounts WHERE id = $1 RETURNING *', [id]);
-
-    if (result.rows.length === 0) {
+    // Get email address before deletion
+    const currentAccount = await pool.query('SELECT email FROM email_accounts WHERE id = $1', [id]);
+    if (currentAccount.rows.length === 0) {
       return res.status(404).json({ error: 'E-posta hesabı bulunamadı' });
     }
+
+    const email = currentAccount.rows[0].email;
+
+    // Delete from mail server first
+    try {
+      await deleteEmailAccountFromMailServer(email);
+    } catch (mailServerError) {
+      console.error('Mail server deletion error:', mailServerError);
+      return res.status(500).json({
+        error: 'E-posta hesabı mail sunucusundan silinemedi: ' + mailServerError.message
+      });
+    }
+
+    // Delete from database
+    const result = await pool.query('DELETE FROM email_accounts WHERE id = $1 RETURNING *', [id]);
 
     res.status(204).send();
   } catch (error) {
     console.error('Error deleting email account:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Endpoint to sync mail server accounts with database
+app.post('/api/admin/email-accounts/sync-mailserver', authenticateAdmin, async (req, res) => {
+  try {
+    const passwdFile = '/etc/dovecot/passwd';
+
+    if (!fs.existsSync(passwdFile)) {
+      return res.status(404).json({ error: 'Mail server passwd file not found' });
+    }
+
+    const passwdContent = fs.readFileSync(passwdFile, 'utf8');
+    const lines = passwdContent.split('\n');
+
+    let synced = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    for (const line of lines) {
+      if (line.trim() && !line.startsWith('#') && line.includes(':{PLAIN}')) {
+        const [email, passwordPart] = line.split(':{PLAIN}');
+        const password = passwordPart;
+
+        if (email && password) {
+          try {
+            // Check if already exists in database
+            const existing = await pool.query('SELECT id FROM email_accounts WHERE email = $1', [email]);
+
+            if (existing.rows.length === 0) {
+              // Add to database
+              await pool.query(
+                'INSERT INTO email_accounts (email, password_hash, quota, used_mb, is_active) VALUES ($1, $2, $3, $4, $5)',
+                [email, password, 1000, 0, true]
+              );
+              synced++;
+              console.log(`Synced mail account to database: ${email}`);
+            } else {
+              skipped++;
+            }
+          } catch (error) {
+            console.error(`Error syncing ${email}:`, error);
+            errors++;
+          }
+        }
+      }
+    }
+
+    res.json({
+      message: 'Mail server sync completed',
+      synced: synced,
+      skipped: skipped,
+      errors: errors
+    });
+  } catch (error) {
+    console.error('Error syncing mail server:', error);
+    res.status(500).json({ error: 'Failed to sync mail server accounts' });
   }
 });
 

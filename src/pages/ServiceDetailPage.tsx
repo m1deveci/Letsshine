@@ -97,7 +97,7 @@ const psychologicalCategories: ServiceCategory[] = [
     icon: 'Heart',
     tooltip: `
       <strong>Geçmişi Kabul Et, Geleceği Keşfet Programı</strong><br>
-      Bu programda önce 6 seans boyunca psikologla çalışılır ve geçmişe ayna tutularak yaşanmışlar üzerindeki etkiler dengeye getirilir, sonra da koçla çalışılarak geleceğin tasarımı yapılır.
+      Bu programda önce 6 seans boyunca psikologla çalışılır ve geçmişe ayna tutularak yaşanmışlar üzerindeki etkiler dengeye getirilir, sonra da  6 seans koçla çalışılarak geleceğin tasarımı yapılır.
     `
   }
 ];
