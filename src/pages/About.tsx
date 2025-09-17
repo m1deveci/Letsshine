@@ -1,8 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Target, Eye, Star, Users, Lightbulb, Shield, Zap, Award, Globe } from 'lucide-react';
+import { AboutContent } from '../types';
 
 const About: React.FC = () => {
+  const [aboutContent, setAboutContent] = useState<AboutContent | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAboutContent = async () => {
+      try {
+        const response = await fetch('/api/about');
+        if (response.ok) {
+          const data = await response.json();
+          setAboutContent(data);
+        }
+      } catch (error) {
+        console.error('Error fetching about content:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAboutContent();
+  }, []);
+
   const containerVariants = {
     hidden: {},
     visible: {
@@ -14,8 +36,8 @@ const About: React.FC = () => {
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 50 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: {
         duration: 0.8,
@@ -26,8 +48,8 @@ const About: React.FC = () => {
 
   const cardVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: {
         duration: 0.6,
@@ -36,46 +58,43 @@ const About: React.FC = () => {
     }
   };
 
-  const values = [
-    {
-      icon: Heart,
-      title: "Samimiyet",
-      description: "İnsanlara kalpten yaklaşır, her ilişkimizi içtenlikle kurarız."
-    },
-    {
-      icon: Shield,
-      title: "Güven",
-      description: "Bize emanet edilen her yolculuğun sorumluluğunu taşıyarak güven inşa ederiz."
-    },
-    {
-      icon: Zap,
-      title: "Çeviklik",
-      description: "Hayatın hızlı değişimine uyum sağlarken, en uygun çözümleri vakit kaybetmeden üretiriz."
-    },
-    {
-      icon: Users,
-      title: "İnsana Değer",
-      description: "İnsanların gerçek ihtiyaçlarını duyar, onların potansiyellerine ışık tutarız."
-    },
-    {
-      icon: Lightbulb,
-      title: "İlham Verme",
-      description: "Her temasımızda gelişime, dönüşüme ve umuda vesile olmayı hedefleriz."
-    },
-    {
-      icon: Globe,
-      title: "Sürdürülebilir Gelişim",
-      description: "Bugünü dönüştürürken, geleceğe kalıcı bir değer bırakırız."
-    }
-  ];
+  // Icon mapping function
+  const getIconComponent = (iconName: string) => {
+    const iconMap: { [key: string]: React.ElementType } = {
+      Heart,
+      Shield,
+      Zap,
+      Users,
+      Lightbulb,
+      Globe,
+      Target,
+      Eye,
+      Star,
+      Award
+    };
+    return iconMap[iconName] || Heart;
+  };
 
-  const slogans = [
-    "İnsanı anlayarak, geleceğe ilham veriyoruz.",
-    "Her adımda potansiyeli keşfet, dönüşümü yaşa.",
-    "Gelişim yolculuğunda ışığınız biz olalım.",
-    "Güvenle başla, ilhamla ilerle.",
-    "Samimiyetle dokunuyoruz, ilhamla dönüştürüyoruz."
-  ];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!aboutContent) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">İçerik yüklenemedi.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -126,18 +145,11 @@ const About: React.FC = () => {
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Manifestosumuz</h2>
             </div>
             <div className="max-w-4xl mx-auto">
-              <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                Biz, insanın içindeki potansiyelin farkındayız. Her bireyin ve her kurumun, doğru anlaşıldığında ortaya çıkabilecek bir ışığı olduğuna inanıyoruz.
-              </p>
-              <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                Görevimiz, o ışığı bulmak ve parlamasına destek olmak. Bazen yön göstererek, bazen yalnızca yanında yürüyerek… Ama her zaman samimiyetle, güvenle ve ilhamla.
-              </p>
-              <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                Bizim için başarı; rakamlarla değil, dokunduğumuz hayatların dönüşümüyle ölçülür. Çünkü biliyoruz ki gelişen bir insan, değişen bir kurum; gelişen bir kurum, dönüşen bir dünya demektir.
-              </p>
-              <p className="text-lg text-gray-600 leading-relaxed">
-                Biz buradayız. Dinlemek, anlamak, güçlendirmek ve ilham vermek için. Çünkü biz, birlikte daha iyisini inşa edebileceğimize inanıyoruz.
-              </p>
+              {aboutContent.manifesto.split('\n\n').map((paragraph, index) => (
+                <p key={index} className="text-lg text-gray-600 leading-relaxed mb-6">
+                  {paragraph}
+                </p>
+              ))}
             </div>
           </motion.div>
         </div>
@@ -160,7 +172,7 @@ const About: React.FC = () => {
                 <h3 className="text-2xl font-bold text-gray-900">Misyonumuz</h3>
               </div>
               <p className="text-gray-600 leading-relaxed">
-                İnsanı en değerli kaynak olarak görerek, bireylerin ve kurumların içsel potansiyellerini keşfetmelerine eşlik etmek. Onları gerçekten duyarak, ihtiyaçlarını anlayarak ve doğru çözümlerle buluşturarak; güven, samimiyet ve gelişim yolculuklarında rehber olmak.
+                {aboutContent.mission}
               </p>
             </motion.div>
 
@@ -171,7 +183,7 @@ const About: React.FC = () => {
                 <h3 className="text-2xl font-bold text-gray-900">Vizyonumuz</h3>
               </div>
               <p className="text-gray-600 leading-relaxed">
-                Her bireyin ve kurumun içindeki gücü ortaya çıkararak; daha mutlu, daha üretken ve daha anlamlı bir dünya inşa etmeye katkı sağlamak.
+                {aboutContent.vision}
               </p>
             </motion.div>
           </div>
@@ -198,21 +210,24 @@ const About: React.FC = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {values.map((value, index) => (
-              <motion.div
-                key={index}
-                variants={cardVariants}
-                className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100"
-              >
-                <div className="flex items-center mb-4">
-                  <div className="p-3 bg-blue-100 rounded-lg mr-4">
-                    <value.icon className="w-6 h-6 text-blue-600" />
+            {aboutContent.values.map((value, index) => {
+              const IconComponent = getIconComponent(value.icon);
+              return (
+                <motion.div
+                  key={index}
+                  variants={cardVariants}
+                  className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100"
+                >
+                  <div className="flex items-center mb-4">
+                    <div className="p-3 bg-blue-100 rounded-lg mr-4">
+                      <IconComponent className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">{value.title}</h3>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">{value.title}</h3>
-                </div>
-                <p className="text-gray-600 leading-relaxed">{value.description}</p>
-              </motion.div>
-            ))}
+                  <p className="text-gray-600 leading-relaxed">{value.description}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </motion.section>
@@ -238,15 +253,24 @@ const About: React.FC = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {slogans.map((slogan, index) => (
-              <motion.div
-                key={index}
-                variants={cardVariants}
-                className="bg-white border border-slate-200 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-              >
-                <p className="text-lg font-medium text-center text-slate-800">{slogan}</p>
-              </motion.div>
+          <div className="space-y-8">
+            {aboutContent.slogans.map((sloganCategory, categoryIndex) => (
+              <div key={categoryIndex}>
+                <h3 className="text-2xl font-bold text-center text-slate-800 mb-6">
+                  {sloganCategory.category}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {sloganCategory.items.map((slogan, index) => (
+                    <motion.div
+                      key={index}
+                      variants={cardVariants}
+                      className="bg-white border border-slate-200 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                    >
+                      <p className="text-lg font-medium text-center text-slate-800">{slogan}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>

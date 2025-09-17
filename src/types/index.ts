@@ -142,3 +142,26 @@ export interface LegalPage {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface AboutValue {
+  icon: string;
+  title: string;
+  description: string;
+}
+
+export interface AboutSlogan {
+  category: string;
+  items: string[];
+}
+
+export interface AboutContent {
+  id?: string;
+  manifesto: string;
+  mission: string;
+  vision: string;
+  values: AboutValue[];
+  slogans: AboutSlogan[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}

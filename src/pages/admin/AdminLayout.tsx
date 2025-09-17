@@ -110,6 +110,7 @@ const AdminLayout: React.FC = () => {
     { name: 'Sayfa Yönetimi', href: '/admin/pages', icon: Layout, children: [
       { name: 'Ana Sayfa', href: '/admin/pages/hero', icon: Home },
       { name: 'Menü Yönetimi', href: '/admin/pages/navigation', icon: Navigation },
+      { name: 'Hakkımızda', href: '/admin/pages/about', icon: FileText },
       { name: 'Yasal Sayfalar', href: '/admin/legal-pages', icon: Scale }
     ]},
     { name: 'Ayarlar', href: '/admin/settings', icon: Settings }

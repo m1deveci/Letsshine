@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Service, SiteSettings, Application, TeamMember, HeroContent, NavigationItem } from '../types';
+import { Service, SiteSettings, Application, TeamMember, HeroContent, NavigationItem, AboutContent } from '../types';
 
 interface AppContextType {
   services: Service[];
@@ -8,6 +8,7 @@ interface AppContextType {
   teamMembers: TeamMember[];
   heroContent: HeroContent | null;
   navigationItems: NavigationItem[];
+  aboutContent: AboutContent | null;
   addService: (service: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateService: (id: string, service: Partial<Service>) => void;
   deleteService: (id: string) => void;
@@ -21,6 +22,7 @@ interface AppContextType {
   addNavigationItem: (item: Omit<NavigationItem, 'id'>) => void;
   updateNavigationItem: (id: string, item: Partial<NavigationItem>) => void;
   deleteNavigationItem: (id: string) => void;
+  updateAboutContent: (about: AboutContent) => Promise<void>;
   refreshUnreadMessagesCount?: () => void;
 }
 
@@ -177,6 +179,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [heroContent, setHeroContent] = useState<HeroContent | null>(defaultHeroContent);
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(defaultNavigationItems);
+  const [aboutContent, setAboutContent] = useState<AboutContent | null>(null);
 
   // Database'den veri çekme fonksiyonları
   const fetchSettings = async () => {
@@ -261,6 +264,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
+  const fetchAboutContent = async () => {
+    try {
+      const response = await fetch('/api/about');
+      if (response.ok) {
+        const data = await response.json();
+        setAboutContent({
+          ...data,
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt)
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching about content:', error);
+    }
+  };
+
   // Component mount olduğunda verileri çek
   useEffect(() => {
     fetchServices();
@@ -269,6 +288,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     fetchTeamMembers();
     fetchHeroContent();
     fetchNavigationItems();
+    fetchAboutContent();
   }, []);
 
   // Favicon'u güncelle
@@ -618,6 +638,36 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
+  // About Content Management
+  const updateAboutContent = async (about: AboutContent) => {
+    try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+      const response = await fetch('/api/admin/about', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify(about)
+      });
+
+      if (response.ok) {
+        const updatedAbout = await response.json();
+        setAboutContent({
+          ...updatedAbout,
+          createdAt: new Date(updatedAbout.createdAt),
+          updatedAt: new Date(updatedAbout.updatedAt)
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Hakkımızda içeriği güncellenirken hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error updating about content:', error);
+      throw error;
+    }
+  };
+
   // Function to refresh unread messages count (will be set by AdminLayout)
   const [refreshUnreadMessagesCount, setRefreshUnreadMessagesCount] = useState<(() => void) | undefined>(undefined);
 
@@ -628,6 +678,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     teamMembers,
     heroContent,
     navigationItems,
+    aboutContent,
     addService,
     updateService,
     deleteService,
@@ -641,6 +692,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     addNavigationItem,
     updateNavigationItem,
     deleteNavigationItem,
+    updateAboutContent,
     refreshUnreadMessagesCount
   };
 

@@ -1856,6 +1856,206 @@ app.post('/api/admin/email-accounts/sync-usage', authenticateAdmin, async (req, 
   }
 });
 
+// About Content API endpoints
+app.get('/api/about', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM about_content WHERE is_active = true ORDER BY id DESC LIMIT 1'
+    );
+
+    if (result.rows.length === 0) {
+      // Return default content if no content exists
+      return res.json({
+        id: null,
+        manifesto: 'Biz, insanın içindeki potansiyelin farkındayız. Her bireyin ve her kurumun, doğru anlaşıldığında ortaya çıkabilecek bir ışığı olduğuna inanıyoruz.',
+        mission: 'İnsanı en değerli kaynak olarak görerek, bireylerin ve kurumların içsel potansiyellerini keşfetmelerine eşlik etmek.',
+        vision: 'Her bireyin ve kurumun içindeki gücü ortaya çıkararak; daha mutlu, daha üretken ve daha anlamlı bir dünya inşa etmeye katkı sağlamak.',
+        values: [
+          {
+            icon: 'Heart',
+            title: 'Samimiyet',
+            description: 'İnsanlara kalpten yaklaşır, her ilişkimizi içtenlikle kurarız.'
+          },
+          {
+            icon: 'Shield',
+            title: 'Güven',
+            description: 'Bize emanet edilen her yolculuğun sorumluluğunu taşıyarak güven inşa ederiz.'
+          }
+        ],
+        slogans: [
+          {
+            category: 'İlham Verici',
+            items: ['İnsanı anlayarak, geleceğe ilham veriyoruz.', 'Her adımda potansiyeli keşfet, dönüşümü yaşa.']
+          }
+        ],
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    const row = result.rows[0];
+    res.json({
+      id: row.id.toString(),
+      manifesto: row.manifesto,
+      mission: row.mission,
+      vision: row.vision,
+      values: row.values || [],
+      slogans: row.slogans || [],
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    });
+  } catch (error) {
+    console.error('Error fetching about content:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/admin/about', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM about_content ORDER BY id DESC LIMIT 1'
+    );
+
+    if (result.rows.length === 0) {
+      // Return default content if no content exists
+      return res.json({
+        id: null,
+        manifesto: 'Biz, insanın içindeki potansiyelin farkındayız. Her bireyin ve her kurumun, doğru anlaşıldığında ortaya çıkabilecek bir ışığı olduğuna inanıyoruz.\n\nGörevimiz, o ışığı bulmak ve parlamasına destek olmak. Bazen yön göstererek, bazen yalnızca yanında yürüyerek… Ama her zaman samimiyetle, güvenle ve ilhamla.\n\nBizim için başarı; rakamlarla değil, dokunduğumuz hayatların dönüşümüyle ölçülür. Çünkü biliyoruz ki gelişen bir insan, değişen bir kurum; gelişen bir kurum, dönüşen bir dünya demektir.\n\nBiz buradayız. Dinlemek, anlamak, güçlendirmek ve ilham vermek için. Çünkü biz, birlikte daha iyisini inşa edebileceğimize inanıyoruz.',
+        mission: 'İnsanı en değerli kaynak olarak görerek, bireylerin ve kurumların içsel potansiyellerini keşfetmelerine eşlik etmek. Onları gerçekten duyarak, ihtiyaçlarını anlayarak ve doğru çözümlerle buluşturarak; güven, samimiyet ve gelişim yolculuklarında rehber olmak.',
+        vision: 'Her bireyin ve kurumun içindeki gücü ortaya çıkararak; daha mutlu, daha üretken ve daha anlamlı bir dünya inşa etmeye katkı sağlamak.',
+        values: [
+          {
+            icon: 'Heart',
+            title: 'Samimiyet',
+            description: 'İnsanlara kalpten yaklaşır, her ilişkimizi içtenlikle kurarız.'
+          },
+          {
+            icon: 'Shield',
+            title: 'Güven',
+            description: 'Bize emanet edilen her yolculuğun sorumluluğunu taşıyarak güven inşa ederiz.'
+          },
+          {
+            icon: 'Zap',
+            title: 'Çeviklik',
+            description: 'Hayatın hızlı değişimine uyum sağlarken, en uygun çözümleri vakit kaybetmeden üretiriz.'
+          },
+          {
+            icon: 'Users',
+            title: 'İnsana Değer',
+            description: 'İnsanların gerçek ihtiyaçlarını duyar, onların potansiyellerine ışık tutarız.'
+          },
+          {
+            icon: 'Lightbulb',
+            title: 'İlham Verme',
+            description: 'Her temasımızda gelişime, dönüşüme ve umuda vesile olmayı hedefleriz.'
+          },
+          {
+            icon: 'Globe',
+            title: 'Sürdürülebilir Gelişim',
+            description: 'Bugünü dönüştürürken, geleceğe kalıcı bir değer bırakırız.'
+          }
+        ],
+        slogans: [
+          {
+            category: 'İlham Verici / Duygusal',
+            items: [
+              'İnsana dokun, geleceği dönüştür.',
+              'Her yolculuk bir keşif, biz yanınızdayız.',
+              'Güvenle, samimiyetle, birlikte büyüyoruz.'
+            ]
+          },
+          {
+            category: 'Dinamik / Çevik',
+            items: [
+              'Hızlı düşün, doğru çöz, birlikte kazan.',
+              'Çevik adımlar, kalıcı sonuçlar.',
+              'Her ihtiyaç için en doğru çözüm, en kısa yoldan.'
+            ]
+          }
+        ],
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    const row = result.rows[0];
+    res.json({
+      id: row.id.toString(),
+      manifesto: row.manifesto,
+      mission: row.mission,
+      vision: row.vision,
+      values: row.values || [],
+      slogans: row.slogans || [],
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    });
+  } catch (error) {
+    console.error('Error fetching about content:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/admin/about', authenticateAdmin, async (req, res) => {
+  try {
+    const { manifesto, mission, vision, values, slogans, isActive } = req.body;
+
+    // Validation
+    if (!manifesto || !mission || !vision) {
+      return res.status(400).json({ error: 'Manifesto, misyon ve vizyon alanları gereklidir' });
+    }
+
+    // Check if about content exists
+    const existingResult = await pool.query('SELECT id FROM about_content ORDER BY id DESC LIMIT 1');
+
+    if (existingResult.rows.length > 0) {
+      // Update existing
+      const result = await pool.query(
+        'UPDATE about_content SET manifesto = $1, mission = $2, vision = $3, values = $4, slogans = $5, is_active = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING *',
+        [manifesto, mission, vision, JSON.stringify(values || []), JSON.stringify(slogans || []), isActive !== undefined ? isActive : true, existingResult.rows[0].id]
+      );
+
+      const row = result.rows[0];
+      res.json({
+        id: row.id.toString(),
+        manifesto: row.manifesto,
+        mission: row.mission,
+        vision: row.vision,
+        values: row.values || [],
+        slogans: row.slogans || [],
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      });
+    } else {
+      // Create new
+      const result = await pool.query(
+        'INSERT INTO about_content (manifesto, mission, vision, values, slogans, is_active) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [manifesto, mission, vision, JSON.stringify(values || []), JSON.stringify(slogans || []), isActive !== undefined ? isActive : true]
+      );
+
+      const row = result.rows[0];
+      res.json({
+        id: row.id.toString(),
+        manifesto: row.manifesto,
+        mission: row.mission,
+        vision: row.vision,
+        values: row.values || [],
+        slogans: row.slogans || [],
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      });
+    }
+  } catch (error) {
+    console.error('Error updating about content:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

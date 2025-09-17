@@ -31,6 +31,7 @@ import HeroManagement from './pages/admin/HeroManagement';
 import NavigationManagement from './pages/admin/NavigationManagement';
 import PagesManagement from './pages/admin/PagesManagement';
 import LegalPagesManagement from './pages/admin/LegalPagesManagement';
+import AboutManagement from './pages/admin/AboutManagement';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,6 +83,7 @@ function App() {
                 <Route path="pages" element={<PagesManagement />} />
                 <Route path="pages/hero" element={<HeroManagement />} />
                 <Route path="pages/navigation" element={<NavigationManagement />} />
+                <Route path="pages/about" element={<AboutManagement />} />
                 <Route path="legal-pages" element={<LegalPagesManagement />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>

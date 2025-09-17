@@ -28,7 +28,7 @@ const PagesManagement: React.FC = () => {
       title: 'Hakkımızda',
       description: 'Hakkımızda sayfası içeriğini yönetin',
       icon: FileText,
-      path: '/admin/about',
+      path: '/admin/pages/about',
       color: 'bg-purple-500'
     },
     {
