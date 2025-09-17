@@ -233,7 +233,7 @@ const About: React.FC = () => {
       </motion.section>
 
       {/* Slogans Section */}
-      <motion.section 
+      <motion.section
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
@@ -246,13 +246,6 @@ const About: React.FC = () => {
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-100/30 to-transparent rounded-full blur-3xl"></div>
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div variants={sectionVariants} className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-slate-800">İlham Verici Sözlerimiz</h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Çalışma felsefemizi yansıtan ve bizi motive eden sözler
-            </p>
-          </motion.div>
-
           <div className="space-y-8">
             {aboutContent.slogans.map((sloganCategory, categoryIndex) => (
               <div key={categoryIndex}>

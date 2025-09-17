@@ -642,14 +642,23 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const updateAboutContent = async (about: AboutContent) => {
     try {
       const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+
+      if (!token) {
+        throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+      }
+
       const response = await fetch('/api/admin/about', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(about)
       });
+
+      if (response.status === 401) {
+        throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+      }
 
       if (response.ok) {
         const updatedAbout = await response.json();

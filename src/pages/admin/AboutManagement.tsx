@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Save, FileText, Heart, Target, Eye, Star, Users, Lightbulb, Shield, Zap, Award, Globe } from 'lucide-react';
+import { Save, FileText, Heart, Target, Eye, Star, Lightbulb } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
 
 const aboutSchema = z.object({
@@ -38,14 +37,15 @@ const AboutManagement: React.FC = () => {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors, isDirty }
   } = useForm<AboutFormData>({
     resolver: zodResolver(aboutSchema),
     defaultValues: {
-      manifesto: aboutContent?.manifesto || '',
-      mission: aboutContent?.mission || '',
-      vision: aboutContent?.vision || '',
-      values: aboutContent?.values || [
+      manifesto: '',
+      mission: '',
+      vision: '',
+      values: [
         {
           icon: 'Heart',
           title: 'Samimiyet',
@@ -77,7 +77,7 @@ const AboutManagement: React.FC = () => {
           description: 'Bugünü dönüştürürken, geleceğe kalıcı bir değer bırakırız.'
         }
       ],
-      slogans: aboutContent?.slogans || [
+      slogans: [
         {
           category: 'İlham Verici / Duygusal',
           items: [
@@ -106,20 +106,89 @@ const AboutManagement: React.FC = () => {
     }
   });
 
+  // aboutContent yüklendiğinde form değerlerini güncelle
+  useEffect(() => {
+    if (aboutContent) {
+      reset({
+        manifesto: aboutContent.manifesto || '',
+        mission: aboutContent.mission || '',
+        vision: aboutContent.vision || '',
+        values: aboutContent.values || [
+          {
+            icon: 'Heart',
+            title: 'Samimiyet',
+            description: 'İnsanlara kalpten yaklaşır, her ilişkimizi içtenlikle kurarız.'
+          },
+          {
+            icon: 'Shield',
+            title: 'Güven',
+            description: 'Bize emanet edilen her yolculuğun sorumluluğunu taşıyarak güven inşa ederiz.'
+          },
+          {
+            icon: 'Zap',
+            title: 'Çeviklik',
+            description: 'Hayatın hızlı değişimine uyum sağlarken, en uygun çözümleri vakit kaybetmeden üretiriz.'
+          },
+          {
+            icon: 'Users',
+            title: 'İnsana Değer',
+            description: 'İnsanların gerçek ihtiyaçlarını duyar, onların potansiyellerine ışık tutarız.'
+          },
+          {
+            icon: 'Lightbulb',
+            title: 'İlham Verme',
+            description: 'Her temasımızda gelişime, dönüşüme ve umuda vesile olmayı hedefleriz.'
+          },
+          {
+            icon: 'Award',
+            title: 'Sürdürülebilir Gelişim',
+            description: 'Bugünü dönüştürürken, geleceğe kalıcı bir değer bırakırız.'
+          }
+        ],
+        slogans: aboutContent.slogans || [
+          {
+            category: 'İlham Verici / Duygusal',
+            items: [
+              'İnsana dokun, geleceği dönüştür.',
+              'Her yolculuk bir keşif, biz yanınızdayız.',
+              'Güvenle, samimiyetle, birlikte büyüyoruz.'
+            ]
+          },
+          {
+            category: 'Dinamik / Çevik',
+            items: [
+              'Hızlı düşün, doğru çöz, birlikte kazan.',
+              'Çevik adımlar, kalıcı sonuçlar.',
+              'Her ihtiyaç için en doğru çözüm, en kısa yoldan.'
+            ]
+          }
+        ]
+      });
+    }
+  }, [aboutContent, reset]);
+
   const watchedValues = watch('values');
   const watchedSlogans = watch('slogans');
 
   const onSubmit = async (data: AboutFormData) => {
     setIsSaving(true);
     try {
+      // Check if user is authenticated
+      const token = sessionStorage.getItem('token');
+      if (!token) {
+        throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+      }
+
       const updatedAbout = {
         ...aboutContent,
         ...data,
+        isActive: aboutContent?.isActive ?? true,
+        createdAt: aboutContent?.createdAt ?? new Date(),
         updatedAt: new Date()
       };
-      
+
       await updateAboutContent(updatedAbout);
-      
+
       setSuccessMessage('Hakkımızda içeriği başarıyla güncellendi!');
       setShowSuccess(true);
       setTimeout(() => {
@@ -128,7 +197,8 @@ const AboutManagement: React.FC = () => {
       }, 3000);
     } catch (error) {
       console.error('Error updating about content:', error);
-      setSuccessMessage('Hakkımızda içeriği güncellenirken hata oluştu!');
+      const errorMessage = error instanceof Error ? error.message : 'Hakkımızda içeriği güncellenirken hata oluştu!';
+      setSuccessMessage(errorMessage);
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
@@ -300,7 +370,7 @@ const AboutManagement: React.FC = () => {
               </div>
               
               <div className="space-y-4">
-                {watchedValues.map((value, index) => (
+                {watchedValues.map((_, index) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
@@ -399,7 +469,7 @@ const AboutManagement: React.FC = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      {slogan.items.map((item, itemIndex) => (
+                      {slogan.items.map((_, itemIndex) => (
                         <div key={itemIndex} className="flex items-center gap-2">
                           <input
                             {...register(`slogans.${categoryIndex}.items.${itemIndex}`)}
