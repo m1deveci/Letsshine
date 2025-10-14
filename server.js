@@ -75,6 +75,7 @@ app.use((req, res, next) => {
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: blob:; " +
     "font-src 'self' data:; " +
+    "frame-src 'self' https://www.google.com https://maps.google.com; " +
     "connect-src 'self' http://localhost:3030 https://letsshine.com.tr https://cloudflareinsights.com;"
   );
   

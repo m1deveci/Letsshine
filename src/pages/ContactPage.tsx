@@ -147,7 +147,7 @@ const ContactPage: React.FC = () => {
                       Sema İş Merkezi'nde bulunan ofisimizi haritada görebilirsiniz.
                     </p>
                   </div>
-                  <div className="w-full h-96 rounded-lg overflow-hidden">
+                  <div className="w-full h-96 rounded-lg overflow-hidden bg-gray-100 relative">
                     <iframe 
                       src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3125.770860588261!2d27.13788007586631!3d38.42365997182908!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14bbd8f0e6024ff1%3A0xcdbb98064e75d2af!2zU2VtYSDEsMWfIE1lci4!5e0!3m2!1str!2str!4v1757931714888!5m2!1str!2str" 
                       width="100%" 
@@ -156,8 +156,16 @@ const ContactPage: React.FC = () => {
                       allowFullScreen 
                       loading="lazy" 
                       referrerPolicy="no-referrer-when-downgrade"
-                      title="Let's Shine Ofis Konumu"
+                      title="Let's Shine Ofis Konumu - Sema İş Merkezi"
+                      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                      onError={(e) => {
+                        console.error('Google Maps iframe yüklenirken hata:', e);
+                      }}
                     />
+                    {/* Loading indicator */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-500 text-sm">
+                      Harita yükleniyor...
+                    </div>
                   </div>
                 </Card>
               </motion.div>
