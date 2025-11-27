@@ -4,6 +4,147 @@ import { Mail, Linkedin, Users, X, Briefcase, Award, Crown, UserCheck, Star } fr
 import { TeamMember } from '../../types';
 import Card from '../ui/Card';
 
+// --- ALT BİLEŞEN (DIŞARI ALINDI) ---
+// TeamMemberCard'ı ana bileşenin dışına taşıdık.
+// Artık 'onOpenModal' fonksiyonunu prop olarak alıyor.
+interface TeamMemberCardProps {
+  member: TeamMember;
+  index: number;
+  isFounder?: boolean;
+  onOpenModal: (member: TeamMember) => void;
+}
+
+const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ 
+  member, 
+  index, 
+  isFounder = false,
+  onOpenModal
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.8, delay: index * 0.1 }}
+    className="w-full max-w-sm" // Kartın maksimum genişliğini sınırla
+  >
+    <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full">
+      <div className="text-center h-full flex flex-col">
+        {/* Profile Image */}
+        <div className="relative mb-6 flex-shrink-0">
+          <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200">
+            {member.image ? (
+              <img
+                src={member.image}
+                alt={member.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Users className="w-16 h-16 text-blue-500" />
+              </div>
+            )}
+          </div>
+          {/* Role Badge */}
+          <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center ${
+            isFounder ? 'bg-yellow-500' : 'bg-blue-500'
+          }`} style={{ right: 'calc(50% - 4rem - 10px)' }}> {/* Rozeti hizada tutmak için stil ayarı */}
+            {isFounder ? (
+              <Crown className="w-4 h-4 text-white" />
+            ) : (
+              <UserCheck className="w-4 h-4 text-white" />
+            )}
+          </div>
+          {/* Decorative Ring */}
+          <div className={`absolute inset-0 w-32 h-32 mx-auto rounded-full border-4 transition-colors duration-300 ${
+            isFounder ? 'border-yellow-100 group-hover:border-yellow-300' : 'border-blue-100 group-hover:border-blue-300'
+          }`}></div>
+        </div>
+
+        {/* Member Info */}
+        <div className="space-y-4 flex-grow flex flex-col">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+              {member.name}
+            </h3>
+            <p className={`font-medium ${isFounder ? 'text-yellow-600' : 'text-blue-600'}`}>
+              {member.title}
+            </p>
+            {isFounder && (
+              <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full mt-1">
+                Kurucu Ortak
+              </span>
+            )}
+          </div>
+
+          {/* Bio */}
+          {member.bio && (
+            <div 
+              className="text-gray-600 text-sm leading-relaxed cursor-pointer hover:text-blue-600 transition-colors duration-300 flex-grow"
+              onClick={() => onOpenModal(member)}
+              title="Detaylı bilgi için tıklayın"
+            >
+              {member.bio.length > 150 
+                ? `${member.bio.substring(0, 150)}...` 
+                : member.bio
+              }
+              {member.bio.length > 150 && (
+                <span className="text-blue-600 font-medium ml-1">Devamını oku</span>
+              )}
+            </div>
+          )}
+
+          {/* Expertise */}
+          {member.expertise && member.expertise.length > 0 && (
+            <div className="space-y-2 mt-auto pt-4">
+              <h4 className="text-sm font-semibold text-gray-700">Uzmanlık Alanları:</h4>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {member.expertise.map((skill, skillIndex) => (
+                  <span
+                    key={skillIndex}
+                    className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
+                      isFounder 
+                        ? 'bg-yellow-50 text-yellow-700' 
+                        : 'bg-blue-50 text-blue-700'
+                    }`}
+                  >
+                    <Star className="w-3 h-3 text-yellow-500 fill-current animate-pulse" />
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Contact Links */}
+          <div className="flex justify-center space-x-4 pt-4 border-t border-gray-100 mt-4">
+            {member.email && (
+              <a
+                href={`mailto:${member.email}`}
+                className="p-2 text-gray-400 hover:text-blue-600 transition-colors duration-300"
+                title={`${member.name} ile e-posta üzerinden iletişim`}
+              >
+                <Mail className="w-5 h-5" />
+              </a>
+            )}
+            {member.linkedin && (
+              <a
+                href={member.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 text-gray-400 hover:text-blue-600 transition-colors duration-300"
+                title={`${member.name} LinkedIn profili`}
+              >
+                <Linkedin className="w-5 h-5" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </Card>
+  </motion.div>
+);
+
+// --- ANA BİLEŞEN ---
 const Team: React.FC = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +174,6 @@ const Team: React.FC = () => {
     fetchTeamMembers();
   }, []);
 
-  // Organize team members into hierarchy
   const organizeTeamMembers = (members: TeamMember[]) => {
     const founders = members.filter(member => member.role === 'founder');
     const consultants = members.filter(member => member.role === 'consultant');
@@ -52,135 +192,6 @@ const Team: React.FC = () => {
     setIsModalOpen(false);
     setSelectedMember(null);
   };
-
-  // Team Member Card Component
-  const TeamMemberCard: React.FC<{ member: TeamMember; index: number; isFounder?: boolean }> = ({ 
-    member, 
-    index, 
-    isFounder = false 
-  }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8, delay: index * 0.1 }}
-    >
-      <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-        <div className="text-center">
-          {/* Profile Image */}
-          <div className="relative mb-6">
-            <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200">
-              {member.image ? (
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Users className="w-16 h-16 text-blue-500" />
-                </div>
-              )}
-            </div>
-            {/* Role Badge */}
-            <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center ${
-              isFounder ? 'bg-yellow-500' : 'bg-blue-500'
-            }`}>
-              {isFounder ? (
-                <Crown className="w-4 h-4 text-white" />
-              ) : (
-                <UserCheck className="w-4 h-4 text-white" />
-              )}
-            </div>
-            {/* Decorative Ring */}
-            <div className={`absolute inset-0 w-32 h-32 mx-auto rounded-full border-4 transition-colors duration-300 ${
-              isFounder ? 'border-yellow-100 group-hover:border-yellow-300' : 'border-blue-100 group-hover:border-blue-300'
-            }`}></div>
-          </div>
-
-          {/* Member Info */}
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
-                {member.name}
-              </h3>
-              <p className={`font-medium ${isFounder ? 'text-yellow-600' : 'text-blue-600'}`}>
-                {member.title}
-              </p>
-              {isFounder && (
-                <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full mt-1">
-                  Kurucu Ortak
-                </span>
-              )}
-            </div>
-
-            {/* Bio */}
-            {member.bio && (
-              <div 
-                className="text-gray-600 text-sm leading-relaxed cursor-pointer hover:text-blue-600 transition-colors duration-300"
-                onClick={() => openModal(member)}
-                title="Detaylı bilgi için tıklayın"
-              >
-                {member.bio.length > 150 
-                  ? `${member.bio.substring(0, 150)}...` 
-                  : member.bio
-                }
-                {member.bio.length > 150 && (
-                  <span className="text-blue-600 font-medium ml-1">Devamını oku</span>
-                )}
-              </div>
-            )}
-
-            {/* Expertise */}
-            {member.expertise && member.expertise.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-gray-700">Uzmanlık Alanları:</h4>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {member.expertise.map((skill, skillIndex) => (
-                    <span
-                      key={skillIndex}
-                      className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
-                        isFounder 
-                          ? 'bg-yellow-50 text-yellow-700' 
-                          : 'bg-blue-50 text-blue-700'
-                      }`}
-                    >
-                      <Star className="w-3 h-3 text-yellow-500 fill-current animate-pulse" />
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Contact Links */}
-            <div className="flex justify-center space-x-4 pt-4">
-              {member.email && (
-                <a
-                  href={`mailto:${member.email}`}
-                  className="p-2 text-gray-400 hover:text-blue-600 transition-colors duration-300"
-                  title={`${member.name} ile e-posta üzerinden iletişim`}
-                >
-                  <Mail className="w-5 h-5" />
-                </a>
-              )}
-              {member.linkedin && (
-                <a
-                  href={member.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 text-gray-400 hover:text-blue-600 transition-colors duration-300"
-                  title={`${member.name} LinkedIn profili`}
-                >
-                  <Linkedin className="w-5 h-5" />
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      </Card>
-    </motion.div>
-  );
 
   if (isLoading) {
     return (
@@ -222,30 +233,33 @@ const Team: React.FC = () => {
 
         {/* Founders Section */}
         {founders.length > 0 && (
-          <div className="mb-16">
+          // DÜZELTME: flex ve items-center eklendi, w-full eklendi
+          <div className="mb-16 flex flex-col items-center w-full">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="text-center mb-12"
+              className="text-center mb-12 flex flex-col items-center" // Başlık içeriğini ortalamak için flex eklendi
             >
               <div className="inline-flex items-center px-4 py-2 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full mb-4">
                 <Crown className="w-4 h-4 mr-2" />
-                Kurucu Ortaklarımız
+                Kurucumuz
               </div>
               <p className="text-gray-600 max-w-2xl mx-auto">
                 Şirketimizin temellerini atan ve vizyonumuzu şekillendiren kurucu ortaklarımız.
               </p>
             </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* DÜZELTME: Grid yapısına justify-items-center eklendi */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full justify-items-center">
               {founders.map((member, index) => (
                 <TeamMemberCard 
                   key={member.id} 
                   member={member} 
                   index={index} 
-                  isFounder={true} 
+                  isFounder={true}
+                  onOpenModal={openModal} 
                 />
               ))}
             </div>
@@ -254,13 +268,14 @@ const Team: React.FC = () => {
 
         {/* Consultants Section */}
         {consultants.length > 0 && (
-          <div>
+           // DÜZELTME: flex ve items-center eklendi (Danışmanlar için de)
+          <div className="flex flex-col items-center w-full">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="text-center mb-12"
+              className="text-center mb-12 flex flex-col items-center"
             >
               <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 text-sm font-medium rounded-full mb-4">
                 <UserCheck className="w-4 h-4 mr-2" />
@@ -274,13 +289,15 @@ const Team: React.FC = () => {
               </p>
             </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* DÜZELTME: Grid yapısına justify-items-center eklendi */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full justify-items-center max-w-6xl">
               {consultants.map((member, index) => (
                 <TeamMemberCard 
                   key={member.id} 
                   member={member} 
                   index={index} 
-                  isFounder={false} 
+                  isFounder={false}
+                  onOpenModal={openModal}
                 />
               ))}
             </div>
@@ -295,7 +312,7 @@ const Team: React.FC = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-center mt-16"
         >
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-8">
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-8 inline-block w-full max-w-4xl">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
               Ekibimizle Tanışmak İster misiniz?
             </h3>
@@ -331,10 +348,10 @@ const Team: React.FC = () => {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200 flex-shrink-0">
                       {selectedMember.image ? (
                         <img
                           src={selectedMember.image}
