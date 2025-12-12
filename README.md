@@ -111,3 +111,27 @@ Bu proje Let's Shine İnsan Kaynakları Danışmanlığı için geliştirilmişt
 - API endpoint'leri oluşturuldu (/api/legal-pages)
 - Yasal sayfalar için dinamik routing sistemi (/yasal/:slug)
 - HTML içerik desteği ile zengin metin editörü
+
+### 12 Aralık 2025 - Eğitim Kataloğu Menüsü ve PDF Görüntüleme Sistemi
+- Header'a dropdown menü desteği eklendi (desktop ve mobile)
+- Hizmetlerimiz menüsü altına "Eğitim Kataloğu" alt menüsü eklendi
+- Yeni sayfa: `/egitim-katalogu` route'u ile EducationCataloguePage oluşturuldu
+- PDF görüntüleme özellikleri:
+  - Object tag ile tarayıcıda PDF önizleme
+  - İndirme ilerleme göstergesi (%0-100 yüzdelik gösterim)
+  - PDF dosya boyutu bilgisi (80.5 MB)
+  - Animasyonlu indirme butonu (ilerleme çubuğu ve ikon animasyonları)
+  - "Yeni Sekmede Aç" alternatif seçeneği
+  - Fallback UI (PDF desteklenmezse)
+- Backend güvenlik güncellemeleri:
+  - PDF dosyaları için `X-Frame-Options: SAMEORIGIN` header'ı
+  - Diğer dosyalar için `X-Frame-Options: DENY` (güvenlik)
+  - CSP politikasına `object-src 'self'` eklendi
+- Nginx yapılandırması:
+  - PDF dosyaları için özel location bloğu
+  - CSP güncellemesi (`script-src`, `object-src`, `frame-src`)
+  - 1 saatlik PDF önbellekleme
+- UI/UX iyileştirmeleri:
+  - 3 bilgi kartı (Kapsamlı İçerik, Güncel Bilgiler, Kolay Erişim)
+  - Responsive tasarım (mobile ve desktop optimizasyonu)
+  - Framer Motion animasyonları
