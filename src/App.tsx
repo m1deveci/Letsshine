@@ -17,6 +17,7 @@ import ServicesPage from './pages/ServicesPage';
 import ServiceDetailPage from './pages/ServiceDetailPage';
 import ContactPage from './pages/ContactPage';
 import LegalPage from './pages/LegalPage';
+import EducationCataloguePage from './pages/EducationCataloguePage';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -63,6 +64,7 @@ function App() {
                         <Route path="/ekibimiz" element={<TeamPage />} />
                         <Route path="/hizmetler" element={<ServicesPage />} />
                         <Route path="/hizmet/:slug" element={<ServiceDetailPage />} />
+                        <Route path="/egitim-katalogu" element={<EducationCataloguePage />} />
                         <Route path="/iletisim" element={<ContactPage />} />
                         <Route path="/yasal/:slug" element={<LegalPage />} />
                       </Routes>

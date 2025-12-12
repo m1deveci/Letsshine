@@ -70,9 +70,11 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
               {member.title}
             </p>
             {isFounder && (
-              <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full mt-1">
-                Kurucu Ortak
-              </span>
+              <div className="flex justify-center mt-1">
+                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                  Kurucu
+                </span>
+              </div>
             )}
           </div>
 
@@ -246,20 +248,18 @@ const Team: React.FC = () => {
                 <Crown className="w-4 h-4 mr-2" />
                 Kurucumuz
               </div>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Şirketimizin temellerini atan ve vizyonumuzu şekillendiren kurucu ortaklarımız.
-              </p>
+           
             </motion.div>
             
-            {/* DÜZELTME: Grid yapısına justify-items-center eklendi */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full justify-items-center">
+            {/* Kurucuları ortalamak için flex yapısı kullanıldı */}
+            <div className="flex flex-wrap gap-8 justify-center w-full">
               {founders.map((member, index) => (
-                <TeamMemberCard 
-                  key={member.id} 
-                  member={member} 
-                  index={index} 
+                <TeamMemberCard
+                  key={member.id}
+                  member={member}
+                  index={index}
                   isFounder={true}
-                  onOpenModal={openModal} 
+                  onOpenModal={openModal}
                 />
               ))}
             </div>

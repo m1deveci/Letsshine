@@ -62,11 +62,18 @@ app.use(limiter);
 app.use((req, res, next) => {
   // Security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+
+  // Allow PDF files to be embedded in object/iframe from same origin
+  if (req.path.endsWith('.pdf')) {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  } else {
+    res.setHeader('X-Frame-Options', 'DENY');
+  }
+
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  
+
   // Content Security Policy
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; " +
@@ -76,9 +83,10 @@ app.use((req, res, next) => {
     "img-src 'self' data: blob:; " +
     "font-src 'self' data:; " +
     "frame-src 'self' https://www.google.com https://maps.google.com; " +
+    "object-src 'self'; " +
     "connect-src 'self' http://localhost:3030 https://letsshine.com.tr https://cloudflareinsights.com;"
   );
-  
+
   next();
 });
 
