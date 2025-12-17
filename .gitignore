@@ -90,3 +90,9 @@ uploads/*
 
 # PM2
 .pm2/
+
+# Webmail
+webmail/logs/*.log
+webmail/temp/*
+!webmail/temp/.htaccess
+webmail/installer/
